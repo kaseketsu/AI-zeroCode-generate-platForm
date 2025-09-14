@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: ai-platform
+server:
+  port: 8123
+  servlet:
+    context-path: /api
+# springdoc-openapi项目配置
+springdoc:
+  group-configs:
+    - group: 'default'
+      packages-to-scan: com.itflower.aiplatform.controller
+# knife4j的增强配置
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
