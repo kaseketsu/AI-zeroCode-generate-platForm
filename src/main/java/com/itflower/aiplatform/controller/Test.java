@@ -1,11 +1,13 @@
 package com.itflower.aiplatform.controller;
 
+import com.itflower.aiplatform.common.response.BaseResponse;
+import com.itflower.aiplatform.common.response.ResultUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/test")
+@RequestMapping("/")
 public class Test {
 
     /**
@@ -14,7 +16,7 @@ public class Test {
      * @return 字符串
      */
     @GetMapping("/hello")
-    public String hello() {
-        return "hello";
+    public BaseResponse<String> hello() {
+        return ResultUtils.success("hello");
     }
 }
