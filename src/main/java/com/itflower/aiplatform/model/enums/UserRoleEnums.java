@@ -6,8 +6,8 @@ import lombok.Getter;
 @Getter
 public enum UserRoleEnums {
 
-    USER("用户", 0),
-    ADMIN("管理员", 1);
+    USER("user", 0),
+    ADMIN("admin", 1);
 
     private final String name;
 
@@ -31,6 +31,24 @@ public enum UserRoleEnums {
         for (UserRoleEnums e : UserRoleEnums.values()) {
             if (e.value == value) {
                 return e;
+            }
+        }
+        return null;
+    }
+
+
+    /**
+     * 根据传入 key 返回对应枚举类
+     * @param key 传入 key
+     * @return 枚举对象
+     */
+    public static UserRoleEnums fromKey(String key) {
+        if (ObjectUtil.isNull(key)) {
+            return null;
+        }
+        for (UserRoleEnums enumValue : UserRoleEnums.values()) {
+            if (enumValue.name.equals(key)) {
+                return enumValue;
             }
         }
         return null;
