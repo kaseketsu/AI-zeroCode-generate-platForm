@@ -1,13 +1,19 @@
-package com.itflower.aiplatform.model.dto;
+package com.itflower.aiplatform.model.dto.user;
 
 import lombok.Data;
 
 import java.io.Serializable;
 
 @Data
-public class UserAddRequest implements Serializable {
+public class UserUpdateRequest implements Serializable {
 
-    private static final long serialVersionUID = 6044690605968547078L;
+
+    private static final long serialVersionUID = -5692777598840305525L;
+
+    /**
+     * id
+     */
+    private Long id;
 
     /**
      * 账号

@@ -1,17 +1,17 @@
-package com.itflower.aiplatform.model.dto;
+package com.itflower.aiplatform.model.dto.user;
 
-import com.mybatisflex.annotation.Id;
-import com.mybatisflex.annotation.KeyType;
-import com.mybatisflex.core.keygen.KeyGenerators;
+import com.itflower.aiplatform.common.PageRequest;
 import lombok.Data;
 
 import java.io.Serializable;
 
+/**
+ * 用户查询请求
+ */
 @Data
-public class UserUpdateRequest implements Serializable {
+public class UserQueryRequest extends PageRequest implements Serializable {
 
-
-    private static final long serialVersionUID = -5692777598840305525L;
+    private static final long serialVersionUID = -8722477551196773655L;
 
     /**
      * id
@@ -22,11 +22,6 @@ public class UserUpdateRequest implements Serializable {
      * 账号
      */
     private String userAccount;
-
-    /**
-     * 密码
-     */
-    private String userPassword;
 
     /**
      * 用户名
@@ -47,4 +42,5 @@ public class UserUpdateRequest implements Serializable {
      * 角色
      */
     private Integer userRole;
+
 }

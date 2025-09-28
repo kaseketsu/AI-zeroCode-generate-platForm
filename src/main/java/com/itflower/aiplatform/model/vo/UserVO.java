@@ -11,6 +11,11 @@ public class UserVO implements Serializable {
     private static final long serialVersionUID = -718493827940343094L;
 
     /**
+     * 用户id
+     */
+    private Long id;
+
+    /**
      * 账号
      */
     private String userAccount;

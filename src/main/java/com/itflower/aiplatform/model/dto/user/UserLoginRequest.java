@@ -1,4 +1,4 @@
-package com.itflower.aiplatform.model.dto;
+package com.itflower.aiplatform.model.dto.user;
 
 import lombok.Data;
 
@@ -15,7 +15,7 @@ public class UserLoginRequest implements Serializable {
     private String userAccount;
 
     /**
-     * 用户名
+     * 密码
      */
-    private String userName;
+    private String userPassword;
 }

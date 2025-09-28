@@ -18,10 +18,13 @@
     </a-col>
     <a-col flex="120px">
       <div class="user-login">
-        <div class="user-icon" v-if="loginUserStore.loginUser.id">
-          {{ loginUserStore.loginUser.username ?? 'anon' }}
+        <div class="user-icon" v-if="loginUser.id">
+          <a-avatar :src="loginUser.userAvatar" />
+          {{ loginUser.userName ?? 'anon' }}
         </div>
-        <a-button type="primary" href="/user/login"> 登录 </a-button>
+        <div v-else>
+          <a-button type="primary" href="/user/login">登录</a-button>
+        </div>
       </div>
     </a-col>
   </div>
@@ -36,8 +39,11 @@ import { useLoginUserStore } from '@/stores/user.ts'
 
 const current = ref<string[]>([])
 const router = useRouter()
+
+// 获取登录用户
 const loginUserStore = useLoginUserStore()
-loginUserStore.fetchLoginUser()
+const loginUser = loginUserStore.loginUser
+
 const items = ref<MenuProps['items']>([
   {
     key: '/',
@@ -77,7 +83,8 @@ router.afterEach((to, from) => {
 }
 
 #globalHeader .title {
-  color: black;
+  color: blue;
+  font-size: 20px;
   margin-left: 15px;
 }
 

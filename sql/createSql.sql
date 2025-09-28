@@ -23,3 +23,20 @@ create table if not exists user
     unique key uk_user_account (user_account),
     index idx_user_name (user_name)
 ) comment '用户' collate = utf8mb4_unicode_ci;
+
+
+# 删除索引
+DROP INDEX uk_user_account ON user;
+
+# 修改 user_account 列的字符集
+ALTER TABLE user
+    MODIFY user_account VARCHAR(512)
+        CHARACTER SET utf8mb4
+        COLLATE utf8mb4_bin;
+
+# 重建索引
+ALTER TABLE user
+    ADD UNIQUE KEY uk_user_account (user_account);
+
+
+

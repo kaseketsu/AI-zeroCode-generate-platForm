@@ -1,4 +1,4 @@
-package com.itflower.aiplatform.model.dto;
+package com.itflower.aiplatform.model.dto.user;
 
 import lombok.Data;
 
