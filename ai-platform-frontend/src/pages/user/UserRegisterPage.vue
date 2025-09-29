@@ -1,5 +1,5 @@
 <template>
-  <div id="userLoginPage">
+  <div id="userRegisterPage">
     <div class="title">
       <h2>AI 智能体 - 智能代码生成器</h2>
     </div>
@@ -18,30 +18,38 @@
       >
         <a-input-password v-model:value="formState.userPassword" />
       </a-form-item>
+      <a-form-item
+        name="checkPassword"
+        :rules="[
+          { required: true, message: '请确认密码！' },
+          { min: 8, message: '密码长度不能小于 8 位！' },
+        ]"
+      >
+        <a-input-password v-model:value="formState.checkPassword" />
+      </a-form-item>
       <div class="tips">
-        还没账号？
-        <router-link to="/user/register">去注册</router-link>
+        已有账号？
+        <router-link to="/user/login">去登录</router-link>
       </div>
       <a-form-item>
-        <a-button style="width: 100%" type="primary" html-type="submit">登录</a-button>
+        <a-button style="width: 100%" type="primary" html-type="submit">注册</a-button>
       </a-form-item>
     </a-form>
   </div>
 </template>
-<script lang="ts" setup>
+
+<script setup lang="ts">
 import { reactive } from 'vue'
-import { userLogin } from '@/api/userController.ts'
-import { useLoginUserStore } from '@/stores/user.ts'
+import { userRegister } from '@/api/userController.ts'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 
-
-const formState = reactive<API.UserLoginRequest>({
+const formState = reactive<API.UserRegisterRequest>({
   userAccount: '',
   userPassword: '',
+  checkPassword: '',
 })
 
-const loginUserStore = useLoginUserStore()
 const router = useRouter()
 
 /**
@@ -50,38 +58,37 @@ const router = useRouter()
  */
 const onFinish = async (values: any) => {
   // 用户登录
-  const res = await userLogin(values)
+  const res = await userRegister(values)
   if (res.data.code === 0 && res.data.data) {
-    loginUserStore.fetchLoginUser()
-    message.success('登录成功')
+    message.success('注册成功')
     router.push({
-      path: '/',
+      path: '/user/login',
       replace: true,
     })
   } else {
-    message.error('登录失败，' + res.data.message)
+    message.error('注册失败，' + res.data.message)
   }
 }
 </script>
 
 <style scoped>
-#userLoginPage {
+#userRegisterPage {
   width: 400px;
   margin: 0 auto;
 }
 
-#userLoginPage .title{
+#userRegisterPage .title {
   text-align: center;
   margin-bottom: 16px;
 }
 
-#userLoginPage .desc {
+#userRegisterPage .desc {
   color: #bbb;
   text-align: center;
   margin-bottom: 16px;
 }
 
-#userLoginPage .tips {
+#userRegisterPage .tips {
   text-align: right;
   margin-bottom: 16px;
 }

@@ -18,9 +18,21 @@
     </a-col>
     <a-col flex="120px">
       <div class="user-login">
-        <div class="user-icon" v-if="loginUser.id">
-          <a-avatar :src="loginUser.userAvatar" />
-          {{ loginUser.userName ?? 'anon' }}
+        <div class="user-icon" v-if="loginUserStore.loginUser.id">
+          <a-dropdown>
+            <a-space>
+              <a-avatar :src="loginUserStore.loginUser.userAvatar" />
+              {{ loginUserStore.loginUser.userName ?? 'anon' }}
+            </a-space>
+            <template #overlay>
+              <a-menu>
+                <a-menu-item @click="doLogout">
+                  <LogoutOutlined />
+                  退出登录
+                </a-menu-item>
+              </a-menu>
+            </template>
+          </a-dropdown>
         </div>
         <div v-else>
           <a-button type="primary" href="/user/login">登录</a-button>
@@ -33,16 +45,18 @@
 <script setup lang="ts">
 import { h, ref } from 'vue'
 import { HomeOutlined } from '@ant-design/icons-vue'
-import { MenuProps } from 'ant-design-vue'
+import { MenuProps, message } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
 import { useLoginUserStore } from '@/stores/user.ts'
+import { LogoutOutlined } from '@ant-design/icons-vue'
+import { userLogOut } from '@/api/userController.ts'
 
 const current = ref<string[]>([])
 const router = useRouter()
 
 // 获取登录用户
 const loginUserStore = useLoginUserStore()
-const loginUser = loginUserStore.loginUser
+loginUserStore.fetchLoginUser()
 
 const items = ref<MenuProps['items']>([
   {
@@ -67,6 +81,18 @@ const doMenuClick = ({ key }: { key: string }): void => {
 router.afterEach((to, from) => {
   current.value = [to.path]
 })
+
+// 账户注销
+const doLogout = async () => {
+  const res = await userLogOut()
+  if (res.data.code === 0) {
+    loginUserStore.setLoginUser({
+      userName: '未登录',
+    })
+    message.success('退出登录成功！')
+    await router.push({ path: '/user/login' })
+  }
+}
 </script>
 
 <style scoped>
