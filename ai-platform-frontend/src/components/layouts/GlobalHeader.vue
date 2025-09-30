@@ -43,7 +43,7 @@
 </template>
 
 <script setup lang="ts">
-import { h, ref } from 'vue'
+import { computed, h, ref } from 'vue'
 import { HomeOutlined } from '@ant-design/icons-vue'
 import { MenuProps, message } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
@@ -58,7 +58,7 @@ const router = useRouter()
 const loginUserStore = useLoginUserStore()
 loginUserStore.fetchLoginUser()
 
-const items = ref<MenuProps['items']>([
+const originItems = [
   {
     key: '/',
     icon: () => h(HomeOutlined),
@@ -70,8 +70,28 @@ const items = ref<MenuProps['items']>([
     label: '关于',
     title: '关于',
   },
-])
+  {
+    key: '/admin/userManage',
+    label: '用户管理',
+    title: '用户管理',
+  }
+]
 
+// 过滤菜单项
+const filterItems = (menus = [] as MenuProps['items']) => {
+  return menus?.filter((item) => {
+    const key = item?.key as string
+    if (key.startsWith('/admin')) {
+      const loginUser = loginUserStore.loginUser
+      if (loginUser.userRole === 0 || !loginUser.id) {
+        return false
+      }
+    }
+    return true
+  })
+}
+
+const items = computed(() => filterItems(originItems))
 // 定义跳转事件
 const doMenuClick = ({ key }: { key: string }): void => {
   router.push({ path: key })
