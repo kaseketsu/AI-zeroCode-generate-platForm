@@ -10,6 +10,7 @@ import com.itflower.aiplatform.model.enums.GenTypeEnums;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 
+@Deprecated
 public class CodeFileSaver {
 
     // 文件根目录 tmp/code_output/biztype_id_filename

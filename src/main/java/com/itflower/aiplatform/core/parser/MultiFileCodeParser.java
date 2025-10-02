@@ -1,43 +1,27 @@
-package com.itflower.aiplatform.core;
-import com.itflower.aiplatform.ai.model.HtmlResponse;
+package com.itflower.aiplatform.core.parser;
+
 import com.itflower.aiplatform.ai.model.MultiFileResponse;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * 代码解析器
- * 提供静态方法解析不同类型的代码内容
- *
- * @author yupi
+ * 多文件代码解析器
  */
-@Deprecated
-public class CodeParserUtil {
+public class MultiFileCodeParser implements CodeParser<MultiFileResponse> {
 
     private static final Pattern HTML_CODE_PATTERN = Pattern.compile("```html\\s*\\n([\\s\\S]*?)```", Pattern.CASE_INSENSITIVE);
     private static final Pattern CSS_CODE_PATTERN = Pattern.compile("```css\\s*\\n([\\s\\S]*?)```", Pattern.CASE_INSENSITIVE);
     private static final Pattern JS_CODE_PATTERN = Pattern.compile("```(?:js|javascript)\\s*\\n([\\s\\S]*?)```", Pattern.CASE_INSENSITIVE);
 
-    /**
-     * 解析 HTML 单文件代码
-     */
-    public static HtmlResponse parseHtmlCode(String codeContent) {
-        HtmlResponse result = new HtmlResponse();
-        // 提取 HTML 代码
-        String htmlCode = extractHtmlCode(codeContent);
-        if (htmlCode != null && !htmlCode.trim().isEmpty()) {
-            result.setHtmlCode(htmlCode.trim());
-        } else {
-            // 如果没有找到代码块，将整个内容作为HTML
-            result.setHtmlCode(codeContent.trim());
-        }
-        return result;
-    }
 
     /**
-     * 解析多文件代码（HTML + CSS + JS）
+     * 解析多文件代码
+     * @param codeContent 代码内容
+     * @return 解析结果
      */
-    public static MultiFileResponse parseMultiFileCode(String codeContent) {
+    @Override
+    public MultiFileResponse parseCode(String codeContent)  {
         MultiFileResponse result = new MultiFileResponse();
         // 提取各类代码
         String htmlCode = extractCodeByPattern(codeContent, HTML_CODE_PATTERN);
@@ -59,20 +43,6 @@ public class CodeParserUtil {
     }
 
     /**
-     * 提取HTML代码内容
-     *
-     * @param content 原始内容
-     * @return HTML代码
-     */
-    private static String extractHtmlCode(String content) {
-        Matcher matcher = HTML_CODE_PATTERN.matcher(content);
-        if (matcher.find()) {
-            return matcher.group(1);
-        }
-        return null;
-    }
-
-    /**
      * 根据正则模式提取代码
      *
      * @param content 原始内容
@@ -86,4 +56,5 @@ public class CodeParserUtil {
         }
         return null;
     }
+
 }
