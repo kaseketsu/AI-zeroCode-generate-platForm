@@ -21,10 +21,10 @@ public class CodeSaverExecutor {
      * @param genEnum 代码类型美剧
      * @return 保存位置
      */
-    public static File executeSave(Object result, GenTypeEnums genEnum) {
+    public static File executeSave(Object result, GenTypeEnums genEnum, Long appId) {
         return switch (genEnum) {
-            case HTML -> htmlCodeSaverTemplate.saveCode((HtmlResponse) result);
-            case HTML_MULTI -> multiFileCodeSaverTemplate.saveCode((MultiFileResponse) result);
+            case HTML -> htmlCodeSaverTemplate.saveCode((HtmlResponse) result, appId);
+            case HTML_MULTI -> multiFileCodeSaverTemplate.saveCode((MultiFileResponse) result, appId);
             default -> throw new BusinessException(ErrorCode.PARAMS_ERROR, "不支持的保存类型");
         };
     }

@@ -14,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
-import javax.swing.text.html.HTML;
 import java.io.File;
 
 
@@ -32,7 +31,7 @@ public class AiGeneratorServiceFacade {
      * @param genEnum 代码类型
      * @return 输出流
      */
-    private Flux<String> processStreamCode(Flux<String> stream, GenTypeEnums genEnum) {
+    private Flux<String> processStreamCode(Flux<String> stream, GenTypeEnums genEnum, Long appId) {
         StringBuilder sb = new StringBuilder();
         return stream
                 .doOnNext(chunk -> {
@@ -42,7 +41,7 @@ public class AiGeneratorServiceFacade {
                     try {
                         String res = sb.toString();
                         Object parseRes = CodeParseExecutor.parseExecute(res, genEnum);
-                        File file = CodeSaverExecutor.executeSave(parseRes, genEnum);
+                        File file = CodeSaverExecutor.executeSave(parseRes, genEnum, appId);
                         log.info("生成并保存 {} 页面 (流式) 成功: {}", genEnum.getValue(), file.getAbsolutePath());
                     } catch (Exception e) {
                         log.info("生成并保存 {} 页面 (流式) 失败: {}", genEnum.getValue(), e.getMessage());
@@ -58,16 +57,16 @@ public class AiGeneratorServiceFacade {
      * @param genTypeEnums 生成类型
      * @return 生成的文件
      */
-    public File generateAndSaveFile(String userMessage, GenTypeEnums genTypeEnums) {
+    public File generateAndSaveFile(String userMessage, GenTypeEnums genTypeEnums, Long appId) {
         ThrowUtils.throwIf(ObjUtil.isNull(genTypeEnums), ErrorCode.PARAMS_ERROR);
         return switch (genTypeEnums) {
             case HTML -> {
                 HtmlResponse htmlResponse = aiGeneratorService.generateHtmlPage(userMessage);
-                yield CodeSaverExecutor.executeSave(htmlResponse, genTypeEnums);
+                yield CodeSaverExecutor.executeSave(htmlResponse, genTypeEnums, appId);
             }
             case HTML_MULTI -> {
                 MultiFileResponse multiFileResponse = aiGeneratorService.generateMultiFileHtmlPage(userMessage);
-                yield CodeSaverExecutor.executeSave(multiFileResponse, genTypeEnums);
+                yield CodeSaverExecutor.executeSave(multiFileResponse, genTypeEnums, appId);
             }
             default -> throw new RuntimeException("不支持的生成类型, " + genTypeEnums.getValue());
         };
@@ -80,16 +79,16 @@ public class AiGeneratorServiceFacade {
      * @param genTypeEnums 生成类型
      * @return 生成的文件
      */
-    public Flux<String> generateAndSaveFileStream(String userMessage, GenTypeEnums genTypeEnums) {
+    public Flux<String> generateAndSaveFileStream(String userMessage, GenTypeEnums genTypeEnums, Long appId) {
         ThrowUtils.throwIf(ObjUtil.isNull(genTypeEnums), ErrorCode.PARAMS_ERROR);
         return switch (genTypeEnums) {
             case HTML -> {
                 Flux<String> stringFlux = aiGeneratorService.generateHtmlPageStream(userMessage);
-                yield processStreamCode(stringFlux, GenTypeEnums.HTML);
+                yield processStreamCode(stringFlux, GenTypeEnums.HTML, appId);
             }
             case HTML_MULTI -> {
                 Flux<String> stringFlux = aiGeneratorService.generateMultiFileHtmlPageStream(userMessage);
-                yield processStreamCode(stringFlux, GenTypeEnums.HTML_MULTI);
+                yield processStreamCode(stringFlux, GenTypeEnums.HTML_MULTI, appId);
             }
             default -> throw new RuntimeException("不支持的生成类型, " + genTypeEnums.getValue());
         };
