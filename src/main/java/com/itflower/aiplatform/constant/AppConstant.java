@@ -23,4 +23,9 @@ public interface AppConstant {
      * 文件部署路径
      */
     String DEPLOY_PATH = System.getProperty("user.dir") + "/tmp/code_deploy";
+
+    /**
+     * 资源访问基路径
+     */
+    String HOST_PATH = "http://localhost";
 }

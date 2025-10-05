@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.itflower.aiplatform.common.exception.ErrorCode;
 import com.itflower.aiplatform.common.exception.ThrowUtils;
+import com.itflower.aiplatform.constant.AppConstant;
 import com.itflower.aiplatform.model.enums.GenTypeEnums;
 
 import java.io.File;
@@ -14,8 +15,7 @@ import java.nio.charset.StandardCharsets;
 public abstract class CodeFileSaverTemplate<T> {
 
     // 文件根目录 tmp/code_output/biztype_id_filename
-    private static final String FILE_ROOT_PATH = System.getProperty("user.dir") +
-            File.separator + "tmp" + File.separator + "code_output" + File.separator;
+    private static final String FILE_ROOT_PATH = AppConstant.OUT_PUT_PATH;
 
     /**
      * 保存文件
