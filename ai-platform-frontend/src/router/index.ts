@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '@/views/HomeView.vue'
+import HomePage from '@/pages/HomePage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -7,7 +7,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: () => import('@/views/HomeView.vue'),
+      component: () => import('@/pages/HomePage.vue'),
     },
     {
       path: '/about',
@@ -29,6 +29,11 @@ const router = createRouter({
       name: 'manage',
       component: () => import('@/pages/admin/UserManagePage.vue'),
     },
+    {
+      path: '/app/generate/:userId/:appId',
+      name: 'generateApp',
+      component: () => import('@/pages/app/AppGeneratePage.vue')
+    }
   ],
 })
 

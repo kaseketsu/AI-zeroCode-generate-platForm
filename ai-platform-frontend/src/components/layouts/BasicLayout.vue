@@ -19,7 +19,8 @@ import GlobalHeader from '@/components/layouts/GlobalHeader.vue'
 </script>
 
 <style scoped>
-#basicLayout {
+#basicLayout .content {
+  width: 100%;
 }
 
 #basicLayout ::v-deep .header {
