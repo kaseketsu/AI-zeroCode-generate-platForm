@@ -19,28 +19,28 @@ import GlobalHeader from '@/components/layouts/GlobalHeader.vue'
 </script>
 
 <style scoped>
+#basicLayout {
+  background: none;
+}
 #basicLayout .content {
   width: 100%;
+  padding: 0;
+  background: none;
+  margin: 0;
 }
 
-#basicLayout ::v-deep .header {
+#basicLayout .header {
   background: white;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   margin-bottom: 15px;
 }
 
 #basicLayout .footer {
-  background: #efefef;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
   text-align: center;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  position: fixed;
-}
-
-#basicLayout .content {
-  background: linear-gradient(to right, #fefefe, #fff);
-  margin-bottom: 28px;
   padding: 20px;
+  margin-top: 40px;
+  border-top: 1px solid rgba(102, 126, 234, 0.1);
 }
 </style>
