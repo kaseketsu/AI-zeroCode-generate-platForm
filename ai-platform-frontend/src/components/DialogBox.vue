@@ -8,7 +8,6 @@ import { addApp } from '@/api/appController.ts'
 
 defineOptions({ name: 'DialogBox' })
 
-
 const value = ref<string>()
 const loginUserStore = useLoginUserStore()
 const router = useRouter()
@@ -17,25 +16,27 @@ const router = useRouter()
  * @param values
  */
 const doSubmit = async (values: string) => {
-  if (!loginUserStore.loginUser || !loginUserStore.loginUser.id) {
+  if (!loginUserStore.loginUser || !loginUserStore.loginUser?.id) {
     message.error('请先登录')
-    router.push(`/user/login`)
+    await router.push(`/user/login`)
     return
   }
   // 根据提示词创建应用
-  const data = await addApp({
-    initialPrompt: values,
-  })
-  const appId = data.data.data
-  message.success('应用创建成功！')
-  // 跳转到应用生成页面
-  await router.push({
-    name: 'generateApp',
-    params: {
-      userId: loginUserStore.loginUser.id,
-      appId: appId,
-    },
-  })
+  try {
+    const res = await addApp({
+      initialPrompt: values,
+    })
+    if (res.data.code === 0 && res.data.data) {
+      message.success('应用创建成功！')
+      const appId = String(res.data.data)
+      // 跳转到应用生成页面
+      await router.push(`/app/generate/${appId}`)
+    } else {
+      message.error('创建失败' + res.data.message)
+    }
+  } catch (error) {
+    message.error('应用创建失败')
+  }
 }
 </script>
 <template>

@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomePage from '@/pages/HomePage.vue'
+import AppGeneratePage from '@/pages/app/AppGeneratePage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -30,9 +31,9 @@ const router = createRouter({
       component: () => import('@/pages/admin/UserManagePage.vue'),
     },
     {
-      path: '/app/generate/:userId/:appId',
+      path: '/app/generate/:appId',
       name: 'generateApp',
-      component: () => import('@/pages/app/AppGeneratePage.vue')
+      component: AppGeneratePage
     }
   ],
 })
