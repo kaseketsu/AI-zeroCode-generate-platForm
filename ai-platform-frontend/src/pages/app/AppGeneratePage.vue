@@ -33,6 +33,8 @@ const messagesContainer = ref<HTMLElement>()
 const loginUserStore = useLoginUserStore()
 const isGenerating = ref<boolean>(false)
 const hasInitialConversation = ref<boolean>(false)
+const isOwner = ref<boolean>(true)
+const userInput = ref<String>('')
 
 /**
  * 获取 app 信息
@@ -61,7 +63,6 @@ const fetchAppInfo = async () => {
         hasInitialConversation.value = true
         await sendInitialMessage(appInfo.value.initPrompt)
       }
-
     } else {
       message.error('获取应用消息失败')
       await routers.push('/')
@@ -112,11 +113,13 @@ const generateMessage = async (prompt: string, aiMessageIndex: number) => {
     // 生成请求参数
     const params = new URLSearchParams({
       appId: appId.value || '',
-      message: prompt
+      message: prompt,
     })
     const baseUrl = request.defaults.baseURL || API_BASE_URL
+    console.log('baseUrl', baseUrl)
     // 生成 url
-    const requestUrl = `${baseUrl}/user/chat/gen/?${params}`
+    const requestUrl = `${baseUrl}/app/user/chat/gen?${params}`
+    console.log(requestUrl)
     // 对 sse 接口发起请求
     eventSource = new EventSource(requestUrl, {
       withCredentials: true,
@@ -151,7 +154,7 @@ const generateMessage = async (prompt: string, aiMessageIndex: number) => {
 
       // 延迟更新，确保后端落库
       setTimeout(async () => {
-       await fetchAppInfo()
+        await fetchAppInfo()
       }, 1000)
     })
 
@@ -182,6 +185,31 @@ const handleError = (err: any, aiMessageIndex: number) => {
   isGenerating.value = false
 }
 
+const sendMessage = async () => {
+  const message = userInput.value.trim()
+  if (!isGenerating.value || !message) return
+  userInput.value = ''
+  // 填入用户消息
+  messages.value.push({
+    type: 'user',
+    content: message,
+    loading: false,
+  })
+  const aiMessageIndex = messages.value.length
+  // 填入 ai 消息占位符
+  messages.value.push({
+    type: 'ai',
+    content: '',
+    loading: true,
+  })
+  // 滚到底部
+  await nextTick()
+  scrollToBottom()
+  // 生成消息
+  isGenerating.value = false
+  await generateMessage(message, aiMessageIndex)
+}
+
 /**
  * 滚动到底部
  */
@@ -194,6 +222,10 @@ const scrollToBottom = () => {
 // 自动挂载获取 app 函数
 onMounted(() => {
   fetchAppInfo()
+  // 判断当前页面是否是当前用户创建
+  if (appInfo.value?.userId !== loginUserStore.loginUser.id) {
+    isOwner.value = false
+  }
 })
 
 // console.log(appId)
@@ -231,11 +263,11 @@ onMounted(() => {
         <div class="message-container" ref="messagesContainer">
           <div v-for="(message, index) in messages" :key="index" class="message-item">
             <div v-if="message.type === 'user'" class="user-message">
-              <div class="message-avatar">
-                <a-avatar :src="loginUserStore.loginUser.userAvatar" />
-              </div>
               <div class="message-content">
                 {{ message.content }}
+              </div>
+              <div class="message-avatar">
+                <a-avatar :src="loginUserStore.loginUser.userAvatar" />
               </div>
             </div>
             <div v-else class="ai-message">
@@ -249,6 +281,42 @@ onMounted(() => {
                   <span>AI 思考ing...</span>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+        <!-- 输入框 -->
+        <div class="input-container">
+          <div class="input-wrapper">
+            <a-tooltip v-if="!isOwner" placement="top" title="无法在别人的作品下对话哟~">
+              <a-textarea
+                v-model:value="userInput"
+                placeholder="输入想要生成的网站吧~"
+                :disabled="!isOwner || isGenerating"
+                @keydown.enter.prevent="sendMessage"
+                :rows="4"
+                :maxLength="1000"
+              />
+            </a-tooltip>
+            <a-textarea
+              v-else
+              v-model:value="userInput"
+              placeholder="输入想要生成的网站吧~"
+              :disabled="isGenerating"
+              @keydown.enter.prevent="sendMessage"
+              :rows="4"
+              :maxLength="1000"
+            />
+            <div class="input-action">
+              <a-button
+                @click="sendMessage"
+                type="primary"
+                :disabled="!isOwner"
+                :loading="isGenerating"
+              >
+                <template #icon>
+                  <SendOutlined />
+                </template>
+              </a-button>
             </div>
           </div>
         </div>
@@ -323,12 +391,35 @@ onMounted(() => {
   gap: 8px;
 }
 
+.ai-message {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.message-item {
+  margin-bottom: 12px;
+}
+
 .message-content {
-  width: 70%;
   padding: 12px 16px;
   overflow-wrap: break-word;
   line-height: 1.5;
   border-radius: 12px;
+}
+
+.user-message .message-content {
+  width: auto;
+  background: #1890ff;
+  color: white;
+}
+
+.ai-message .message-content {
+  width: 80%;
+  background: #f5f5f5;
+  color: #1a1a1a;
+  padding: 8px 12px;
 }
 
 .message-avatar {

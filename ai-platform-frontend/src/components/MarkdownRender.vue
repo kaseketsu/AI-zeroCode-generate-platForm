@@ -22,7 +22,7 @@ const md: MarkdownIt = new MarkdownIt({
   linkify: true,
   typographer: true,
   highlight: function (code: string, lang: string): string {
-    if (lang && hljs.get(lang)) {
+    if (lang && hljs.getLanguage(lang)) {
       try {
         return (
           "<pre class='hljs'><code>" +
