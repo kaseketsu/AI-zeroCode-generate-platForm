@@ -6,10 +6,14 @@
       <div class="text">{{ text2 }}</div>
     </div>
     <div class="desc">与 AI 对话轻松创建应用和网站</div>
+<!--    <img :src="loadImage" alt="" class="load-gif" />-->
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+
+// const loadImage = ref<string>("src/assets/page_load.gif")
 defineOptions({ name: 'DialogBoxTitle' })
 const { text1, text2 } = defineProps<{
   text1: string

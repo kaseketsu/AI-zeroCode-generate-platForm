@@ -5,14 +5,14 @@ import { nextTick, onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import {
   CloudUploadOutlined,
-  SendOutlined,
   ExportOutlined,
   InfoCircleOutlined,
+  SendOutlined,
 } from '@ant-design/icons-vue'
 import { useLoginUserStore } from '@/stores/user.ts'
 import logo5 from '@/assets/logo5.png'
 import MarkdownRender from '@/components/MarkdownRender.vue'
-import { API_BASE_URL } from '@/config/env.ts'
+import { API_BASE_URL, getStaticBaseUrl } from '@/config/env.ts'
 import request from '@/request'
 
 /**
@@ -36,6 +36,10 @@ const hasInitialConversation = ref<boolean>(false)
 const isOwner = ref<boolean>(true)
 const userInput = ref<String>('')
 
+// 渲染相关
+const previewUrl = ref<string>('')
+const loadImage = ref<string>(",,/assets/page_load.gif")
+const previewReady = ref<boolean>(false)
 /**
  * 获取 app 信息
  */
@@ -55,7 +59,10 @@ const fetchAppInfo = async () => {
     })
     if (res.data.code === 0 && res.data.data) {
       appInfo.value = res.data.data
-
+      // 判断 isOwner
+      if (appInfo.value?.userId !== loginUserStore.loginUser.id) {
+        isOwner.value = false
+      }
       const viewModel = route.query.view === '1'
 
       // 如果是第一次对话，发送初始对话消息
@@ -98,7 +105,18 @@ const sendInitialMessage = async (prompt: string) => {
 
   // 生成代码
   isGenerating.value = true
-  generateMessage(prompt, aiMessageIndex)
+  await generateMessage(prompt, aiMessageIndex)
+}
+
+/**
+ * 更新 preview
+ */
+const updatePreview = async () => {
+  if (appId.value) {
+    const codeGenType = appInfo.value?.codeGenType
+    previewUrl.value = getStaticBaseUrl(codeGenType, appId.value)
+    previewReady.value = true
+  }
 }
 
 /**
@@ -155,6 +173,7 @@ const generateMessage = async (prompt: string, aiMessageIndex: number) => {
       // 延迟更新，确保后端落库
       setTimeout(async () => {
         await fetchAppInfo()
+        await updatePreview()
       }, 1000)
     })
 
@@ -168,6 +187,7 @@ const generateMessage = async (prompt: string, aiMessageIndex: number) => {
 
         setTimeout(async () => {
           await fetchAppInfo()
+          await updatePreview()
         }, 1000)
       } else {
         handleError(new Error('SSE 连接错误'), aiMessageIndex)
@@ -187,7 +207,7 @@ const handleError = (err: any, aiMessageIndex: number) => {
 
 const sendMessage = async () => {
   const message = userInput.value.trim()
-  if (!isGenerating.value || !message) return
+  if (isGenerating.value || !message) return
   userInput.value = ''
   // 填入用户消息
   messages.value.push({
@@ -211,6 +231,13 @@ const sendMessage = async () => {
 }
 
 /**
+ * 加载后可部署
+ */
+const onPageLoad = () => {
+  previewReady.value = true
+}
+
+/**
  * 滚动到底部
  */
 const scrollToBottom = () => {
@@ -219,13 +246,18 @@ const scrollToBottom = () => {
   }
 }
 
+/**
+ * 打开 preview 页面
+ */
+const moveToNewPage = () => {
+  if (previewUrl.value) {
+    window.open(previewUrl.value, '_blank')
+  }
+}
+
 // 自动挂载获取 app 函数
 onMounted(() => {
   fetchAppInfo()
-  // 判断当前页面是否是当前用户创建
-  if (appInfo.value?.userId !== loginUserStore.loginUser.id) {
-    isOwner.value = false
-  }
 })
 
 // console.log(appId)
@@ -322,7 +354,36 @@ onMounted(() => {
         </div>
       </div>
       <!-- 渲染区域 -->
-      <div class="preview-area"></div>
+      <div class="preview-area">
+        <div class="preview-header">
+          <h3>生成后的网页展示</h3>
+          <a-button v-if="previewUrl" type="link" @click="moveToNewPage">
+            去新页面
+            <template #icon>
+              <ExportOutlined />
+            </template>
+          </a-button>
+        </div>
+        <div class="preview-content">
+          <div v-if="!previewUrl && !isGenerating" class="preview-tip">
+            <div class="placeholder-icon">🌐</div>
+            <p>网站文件生成完成后将在这里展示</p>
+          </div>
+          <div v-else-if="isGenerating" class="preview-loading">
+            <div class="loading-gif">
+              <img :src="loadImage" alt="" class="load-gif" />
+              <span class="load-text">全力加载中...</span>
+            </div>
+          </div>
+          <iframe
+            v-else
+            :src="previewUrl"
+            frameborder="0"
+            @load="onPageLoad"
+            class="preview-iframe"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -432,9 +493,80 @@ onMounted(() => {
   align-items: center;
 }
 
+/* 输入区 */
+.input-container {
+  padding: 16px;
+  background: white;
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.input-action {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+}
+
 /* 渲染区 */
 .preview-area {
   display: flex;
   flex: 3;
+  flex-direction: column;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.preview-content {
+  flex: 1;
+  overflow: hidden;
+}
+
+.preview-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.preview-tip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #666;
+}
+
+.placeholder-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.preview-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #666;
+}
+
+.load-gif {
+  margin-bottom: 8px;
+}
+
+.preview-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
 }
 </style>
