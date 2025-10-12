@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
-import { getAppById } from '@/api/appController.ts'
-import { nextTick, onMounted, ref } from 'vue'
+import { deleteAppById, deploy, getAppById } from '@/api/appController.ts'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import {
   CloudUploadOutlined,
@@ -14,6 +14,8 @@ import logo5 from '@/assets/logo5.png'
 import MarkdownRender from '@/components/MarkdownRender.vue'
 import { API_BASE_URL, getStaticBaseUrl } from '@/config/env.ts'
 import request from '@/request'
+import AppDetailModal from '@/components/AppDetailModal.vue'
+import AppDeployDetail from '@/components/AppDeployDetail.vue'
 
 /**
  * 自定义消息类型
@@ -33,13 +35,29 @@ const messagesContainer = ref<HTMLElement>()
 const loginUserStore = useLoginUserStore()
 const isGenerating = ref<boolean>(false)
 const hasInitialConversation = ref<boolean>(false)
-const isOwner = ref<boolean>(true)
 const userInput = ref<String>('')
 
 // 渲染相关
 const previewUrl = ref<string>('')
-const loadImage = ref<string>(",,/assets/page_load.gif")
+const loadImage = 'src/assets/page_load.gif'
 const previewReady = ref<boolean>(false)
+const appDetailVisible = ref<boolean>(false)
+const deployUrl = ref<string>('')
+const deployDetailVisible = ref<boolean>(false)
+const deploying = ref<boolean>(false)
+
+const showDetail = () => {
+  appDetailVisible.value = true
+}
+
+const isOwner = computed(() => {
+  return loginUserStore.loginUser.id === appInfo.value?.userId
+})
+
+const isAdmin = computed(() => {
+  return loginUserStore.loginUser.userRole === 1
+})
+
 /**
  * 获取 app 信息
  */
@@ -59,10 +77,6 @@ const fetchAppInfo = async () => {
     })
     if (res.data.code === 0 && res.data.data) {
       appInfo.value = res.data.data
-      // 判断 isOwner
-      if (appInfo.value?.userId !== loginUserStore.loginUser.id) {
-        isOwner.value = false
-      }
       const viewModel = route.query.view === '1'
 
       // 如果是第一次对话，发送初始对话消息
@@ -116,6 +130,33 @@ const updatePreview = async () => {
     const codeGenType = appInfo.value?.codeGenType
     previewUrl.value = getStaticBaseUrl(codeGenType, appId.value)
     previewReady.value = true
+  }
+}
+
+/**
+ * 路由到对应编辑页面
+ */
+const editApp = () => {
+  if (appId.value) {
+    routers.push(`/app/edit/${appId.value}`)
+  }
+}
+
+const deleteApp = async () => {
+  if (!appId.value) return
+  try {
+
+    const res = await deleteAppById({
+      id: appId.value,
+    })
+    if (res.data.code === 0) {
+      message.success('删除成功')
+      await routers.push('/')
+    } else {
+      message.error('删除失败, ' + res.data.message)
+    }
+  } catch (e) {
+    message.error('删除失败, ' + e)
   }
 }
 
@@ -231,6 +272,29 @@ const sendMessage = async () => {
 }
 
 /**
+ * 部署应用
+ */
+const deployApp = async () => {
+  if (!appId.value) return
+  try {
+    deploying.value = true
+    const res = await deploy({
+      appId: appId.value,
+    })
+    if (res.data.code === 0 && res.data.data) {
+      deployUrl.value = res.data.data
+      message.success('应用部署成功!')
+      deploying.value = false
+      deployDetailVisible.value = true
+    } else {
+      message.error('应用部署失败，' + res.data.message)
+    }
+  } catch (e) {
+    message.error('应用部署失败, ' + e)
+  }
+}
+
+/**
  * 加载后可部署
  */
 const onPageLoad = () => {
@@ -255,6 +319,15 @@ const moveToNewPage = () => {
   }
 }
 
+/**
+ * 打开部署页面
+ */
+const openDeploySite = () => {
+  if (deployUrl.value) {
+    window.open(deployUrl.value, '_blank')
+  }
+}
+
 // 自动挂载获取 app 函数
 onMounted(() => {
   fetchAppInfo()
@@ -273,13 +346,13 @@ onMounted(() => {
           </div>
         </div>
         <div class="buttons">
-          <a-button type="default" @click="">
+          <a-button type="default" @click="showDetail">
             <template #icon>
               <InfoCircleOutlined />
             </template>
             应用详情
           </a-button>
-          <a-button type="primary" @click="" ghost>
+          <a-button type="primary" @click="deployApp" :loading="deploying" ghost>
             <template #icon>
               <CloudUploadOutlined />
             </template>
@@ -371,7 +444,11 @@ onMounted(() => {
           </div>
           <div v-else-if="isGenerating" class="preview-loading">
             <div class="loading-gif">
-              <img :src="loadImage" alt="" class="load-gif" />
+              <img
+                src="D:\AAAFlower-Projects\ai-platform\ai-platform-frontend\src\assets\page_load.gif"
+                alt=""
+                class="load-gif"
+              />
               <span class="load-text">全力加载中...</span>
             </div>
           </div>
@@ -385,6 +462,18 @@ onMounted(() => {
         </div>
       </div>
     </div>
+    <AppDetailModal
+      v-model:open="appDetailVisible"
+      :app="appInfo"
+      :show-actions="isOwner || isAdmin"
+      @edit="editApp"
+      @delete="deleteApp"
+    />
+    <AppDeployDetail
+      v-model:open="deployDetailVisible"
+      :deploy-url="deployUrl"
+      @open-site="openDeploySite"
+    />
   </div>
 </template>
 
@@ -560,8 +649,20 @@ onMounted(() => {
   color: #666;
 }
 
+.loading-gif {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
 .load-gif {
-  margin-bottom: 8px;
+  width: 256px;
+  height: auto;
+}
+
+.load-text {
+  font-size: 16px;
 }
 
 .preview-iframe {
