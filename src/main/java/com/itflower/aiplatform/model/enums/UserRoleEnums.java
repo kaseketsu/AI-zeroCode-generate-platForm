@@ -1,5 +1,6 @@
 package com.itflower.aiplatform.model.enums;
 
+
 import cn.hutool.core.util.ObjectUtil;
 import lombok.Getter;
 
