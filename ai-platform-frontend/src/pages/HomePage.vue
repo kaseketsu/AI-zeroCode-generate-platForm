@@ -1,9 +1,13 @@
 <template>
-  <div id="home-page">
+  <div id="homePage">
     <div class="dialog">
       <DialogBoxTitle text1="一句话" text2="呈所想"/>
       <div class="dialogBox">
         <DialogBox/>
+      </div>
+      <div class="display-userWork">
+        <h2>我的作品</h2>
+
       </div>
     </div>
   </div>
@@ -18,4 +22,12 @@ import DialogBox from '@/components/DialogBox.vue'
 .dialogBox {
   margin-top: 20px;
 }
+#homePage {
+  width: 1000px;
+  margin: 0 auto;
+}
+.display-userWork h2 {
+  margin-top: 16px;
+}
+
 </style>
