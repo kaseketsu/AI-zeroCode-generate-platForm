@@ -22,6 +22,6 @@ export const getStaticBaseUrl = (codeGenType: any, appId: string) => {
  * 打开 nginx 部署页面
  * @param deployKey
  */
-export const getDeployUrl = (deployKey: string | undefined) => {
+export const getDeployUrl = (deployKey: string | number | undefined) => {
   return `${HOST_URL}/${deployKey}`;
 }

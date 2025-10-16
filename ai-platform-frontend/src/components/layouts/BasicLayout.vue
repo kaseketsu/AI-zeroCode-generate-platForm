@@ -22,11 +22,43 @@ import GlobalHeader from '@/components/layouts/GlobalHeader.vue'
 #basicLayout {
   background: none;
 }
+
 #basicLayout .content {
   width: 100%;
   padding: 0;
-  background: none;
   margin: 0;
+
+  /* 🌈 柔和渐变 + 轻光晕 */
+  background:
+    radial-gradient(800px 600px at 20% 30%, rgba(123, 163, 255, 0.25), transparent 60%),
+    radial-gradient(700px 500px at 80% 70%, rgba(255, 170, 210, 0.2), transparent 60%),
+    linear-gradient(180deg, #f7f9fc 0%, #f0f4ff 100%);
+
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  animation: contentGlow 24s ease-in-out infinite alternate;
+}
+
+/* ✨ 背景轻微呼吸动画（不会晃眼） */
+@keyframes contentGlow {
+  0% {
+    background-position:
+      0% 0%,
+      100% 100%,
+      center;
+  }
+  50% {
+    background-position:
+      2% 1%,
+      98% 99%,
+      center;
+  }
+  100% {
+    background-position:
+      0% 0%,
+      100% 100%,
+      center;
+  }
 }
 
 #basicLayout .header {

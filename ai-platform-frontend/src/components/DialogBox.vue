@@ -120,7 +120,7 @@ const setPrompt = (prompt: string) => {
 .input-actions {
   display: flex;
   flex-direction: row;
-  margin-top: 12px;
+  margin-top: 20px;
   gap: 10px;
   align-items: center;
   justify-content: center;

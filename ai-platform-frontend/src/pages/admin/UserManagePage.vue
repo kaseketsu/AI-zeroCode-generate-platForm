@@ -1,43 +1,45 @@
 <template>
-  <div class="searchSpace">
-    <a-form layout="inline" :model="searchParams" @finish="doSearch">
-      <a-form-item label="账号">
-        <a-input v-model:value="searchParams.userAccount" placeholder="请输入账号" />
-      </a-form-item>
-      <a-form-item label="用户名">
-        <a-input v-model:value="searchParams.userName" placeholder="请输入用户名" />
-      </a-form-item>
-      <a-form-item>
-        <a-button type="primary" html-type="submit">查询</a-button>
-      </a-form-item>
-    </a-form>
+  <div id="userManagePage">
+    <div class="searchSpace">
+      <a-form layout="inline" :model="searchParams" @finish="doSearch">
+        <a-form-item label="账号">
+          <a-input v-model:value="searchParams.userAccount" placeholder="请输入账号" />
+        </a-form-item>
+        <a-form-item label="用户名">
+          <a-input v-model:value="searchParams.userName" placeholder="请输入用户名" />
+        </a-form-item>
+        <a-form-item>
+          <a-button type="primary" html-type="submit">查询</a-button>
+        </a-form-item>
+      </a-form>
+    </div>
+    <a-table
+      :columns="columns"
+      :data-source="data"
+      :pagination="pagination"
+      @change="handleTableChange"
+    >
+      <template #bodyCell="{ column, record }">
+        <template v-if="column.key === 'action'">
+          <a-button danger @click="doUserDelete(record.id)">删除</a-button>
+        </template>
+        <template v-else-if="column.dataIndex === 'userAvatar'">
+          <img :src="record.userAvatar" alt="头像" style="width: 120px" />
+        </template>
+        <template v-else-if="column.dataIndex === 'userRole'">
+          <div v-if="record.userRole === 0">
+            <a-tag color="green">普通用户</a-tag>
+          </div>
+          <div v-else-if="record.userRole === 1">
+            <a-tag color="blue">管理员</a-tag>
+          </div>
+        </template>
+        <template v-else-if="column.dataIndex === 'createTime'">
+          {{ dayjs(record.createTime).format('YYYY-MM-DD HH:mm:ss') }}
+        </template>
+      </template>
+    </a-table>
   </div>
-  <a-table
-    :columns="columns"
-    :data-source="data"
-    :pagination="pagination"
-    @change="handleTableChange"
-  >
-    <template #bodyCell="{ column, record }">
-      <template v-if="column.key === 'action'">
-        <a-button danger @click="doUserDelete(record.id)">删除</a-button>
-      </template>
-      <template v-else-if="column.dataIndex === 'userAvatar'">
-        <img :src="record.userAvatar" alt="头像" style="width: 120px" />
-      </template>
-      <template v-else-if="column.dataIndex === 'userRole'">
-        <div v-if="record.userRole === 0">
-          <a-tag color="green">普通用户</a-tag>
-        </div>
-        <div v-else-if="record.userRole === 1">
-          <a-tag color="blue">管理员</a-tag>
-        </div>
-      </template>
-      <template v-else-if="column.dataIndex === 'createTime'">
-        {{ dayjs(record.createTime).format('YYYY-MM-DD HH:mm:ss') }}
-      </template>
-    </template>
-  </a-table>
 </template>
 <script lang="ts" setup>
 import { computed, onMounted, reactive, ref } from 'vue'
@@ -135,7 +137,13 @@ onMounted(() => {
 })
 </script>
 <style>
-#userLoginPage .searchSpace {
+#userManagePage .searchSpace {
   margin-bottom: 16px;
+  margin-top: 16px;
+}
+
+#userManagePage {
+  width: 80%;
+  margin: 0 auto;
 }
 </style>
