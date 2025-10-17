@@ -61,5 +61,18 @@ create table app
 ) comment '应用' collate = utf8mb4_unicode_ci;
 
 
-
-
+-- 对话历史表
+create table if not exists chat_history
+(
+    id           bigint auto_increment comment 'id' primary key,
+    message      text                               not null comment '对话消息',
+    message_type varchar(64)                        not null comment 'user/ai',
+    user_id      bigint                             not null comment '创建用户id',
+    app_id       bigint                             not null comment '应用id',
+    edit_time    datetime default CURRENT_TIMESTAMP not null comment '编辑时间',
+    create_time  datetime default CURRENT_TIMESTAMP not null comment '创建时间',
+    update_time  datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
+    INDEX idx_app_id (app_id),
+    INDEX idx_create_time (create_time),
+    INDEX idx_app_id_create_time (app_id, create_time)
+) comment '对话历史' collate = utf8mb4_unicode_ci

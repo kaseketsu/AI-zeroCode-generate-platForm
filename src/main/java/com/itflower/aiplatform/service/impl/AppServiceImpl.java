@@ -20,8 +20,10 @@ import com.itflower.aiplatform.model.dto.app.user.AppQueryRequest;
 import com.itflower.aiplatform.model.dto.app.user.AppUpdateRequest;
 import com.itflower.aiplatform.model.entity.User;
 import com.itflower.aiplatform.model.enums.GenTypeEnums;
+import com.itflower.aiplatform.model.enums.MessageTypeEnum;
 import com.itflower.aiplatform.model.vo.AppVO;
 import com.itflower.aiplatform.model.vo.UserVO;
+import com.itflower.aiplatform.service.ChatHistoryService;
 import com.itflower.aiplatform.service.UserService;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
@@ -31,6 +33,7 @@ import com.itflower.aiplatform.mapper.AppMapper;
 import com.itflower.aiplatform.service.AppService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,6 +41,8 @@ import reactor.core.publisher.Flux;
 
 import java.awt.font.TextHitInfo;
 import java.io.File;
+import java.io.Serial;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -48,6 +53,7 @@ import java.util.stream.Collectors;
  * @author F1ower
  */
 @Service
+@Slf4j
 public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppService {
 
     @Resource
@@ -55,6 +61,9 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
 
     @Resource
     AiGeneratorServiceFacade aiGeneratorServiceFacade;
+
+    @Resource
+    ChatHistoryService chatHistoryService;
 
     /**
      * 创建 app
@@ -396,8 +405,23 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         String codeGenType = app.getCodeGenType();
         GenTypeEnums enumByValue = GenTypeEnums.getEnumByValue(codeGenType);
         ThrowUtils.throwIf(enumByValue == null, ErrorCode.SYSTEM_ERROR, "不支持的生成类型");
-        Flux<String> stringFlux = aiGeneratorServiceFacade.generateAndSaveFileStream(message, enumByValue, appId);
-        return stringFlux;
+
+        // 插入对话添加逻辑
+        chatHistoryService.addChatHistory(appId, userId, message, MessageTypeEnum.USER_MESSAGE.getValue());
+
+        Flux<String> contentFlux = aiGeneratorServiceFacade.generateAndSaveFileStream(message, enumByValue, appId);
+        // 对 AI 对话进行处理
+        StringBuilder sb = new StringBuilder();
+        return contentFlux.doOnNext(sb::append)
+                .doOnComplete(() -> {
+                    String res = sb.toString();
+                    if (StrUtil.isNotBlank(res)) {
+                        chatHistoryService.addChatHistory(appId, userId, res, MessageTypeEnum.AI_MESSAGE.getValue());
+                    }
+                }).doOnError(error -> {
+                    String errorMessage = "AI 回复失败, " + error.getMessage();
+                    chatHistoryService.addChatHistory(appId, userId, errorMessage, MessageTypeEnum.AI_MESSAGE.getValue());
+                });
     }
 
     /**
@@ -451,5 +475,33 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
 
         // 返回访问地址
         return String.format("%s/%s/", AppConstant.HOST_PATH, deployKey);
+    }
+
+    /**
+     * 重写关联删除应用对话信息
+     *
+     * @param id id
+     * @return bool
+     */
+    @Override
+    public boolean removeById(Serializable id) {
+        // 校验参数
+        if (ObjUtil.isNull(id)) {
+            return false;
+        }
+        long appId = Long.parseLong(id.toString());
+        if (appId <= 0) {
+            return false;
+        }
+
+        // 删除对话
+        try {
+            chatHistoryService.removeChatHistory(appId);
+        } catch (Exception e) {
+            log.error("删除应用关联对话失败, {}", e.getMessage());
+        }
+
+        // 删除应用
+        return super.removeById(id);
     }
 }

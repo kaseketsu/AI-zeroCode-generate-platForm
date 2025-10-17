@@ -10,7 +10,7 @@ import java.util.Map;
 
 public class MyBatisGenerator {
 
-    private static final String[] TABLE_NAMES = {"app"};
+    private static final String[] TABLE_NAMES = {"chat_history"};
 
     public static void main(String[] args) {
 
