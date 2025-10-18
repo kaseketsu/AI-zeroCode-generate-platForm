@@ -26,7 +26,8 @@ public class AuthInterceptor {
 
     /**
      * 权限拦截
-     * @param pjp 拦截点
+     *
+     * @param pjp       拦截点
      * @param authCheck 权限注解
      * @return 继续执行
      * @throws Throwable 异常

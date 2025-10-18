@@ -1,12 +1,13 @@
 package com.itflower.aiplatform.model.dto.chatHistory;
 
+import com.itflower.aiplatform.common.PageRequest;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Data
-public class ChatHistoryQueryRequest implements Serializable {
+public class ChatHistoryQueryRequest extends PageRequest implements Serializable {
 
     private static final long serialVersionUID = -4473196353496151680L;
 
