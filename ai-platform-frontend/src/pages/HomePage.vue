@@ -83,7 +83,7 @@ const featuredWorkPage = reactive({
 })
 const viewChat = (appId: string | number | undefined) => {
   if (appId) {
-    router.push(`/app/generate/${appId}?view=1`)
+    router.push(`/app/generate/${appId}`)
   }
 }
 

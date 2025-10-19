@@ -16,6 +16,8 @@ import { API_BASE_URL, getStaticBaseUrl } from '@/config/env.ts'
 import request from '@/request'
 import AppDetailModal from '@/components/AppDetailModal.vue'
 import AppDeployDetail from '@/components/AppDeployDetail.vue'
+import { listAppChatHistory } from '@/api/chatHistoryController.ts'
+import listAppChatHistoryParams = API.listAppChatHistoryParams
 
 /**
  * 自定义消息类型
@@ -23,7 +25,8 @@ import AppDeployDetail from '@/components/AppDeployDetail.vue'
 interface Message {
   type: 'ai' | 'user'
   content: string
-  loading: boolean
+  loading?: boolean
+  createTime: string
 }
 
 const route = useRoute()
@@ -45,6 +48,10 @@ const appDetailVisible = ref<boolean>(false)
 const deployUrl = ref<string>('')
 const deployDetailVisible = ref<boolean>(false)
 const deploying = ref<boolean>(false)
+
+// 对话历史相关
+const lastGenerateTime = ref<string>()
+const historyLoaded = ref(false)
 
 const showDetail = () => {
   appDetailVisible.value = true
@@ -77,10 +84,16 @@ const fetchAppInfo = async () => {
     })
     if (res.data.code === 0 && res.data.data) {
       appInfo.value = res.data.data
-      const viewModel = route.query.view === '1'
+      await getChatHistory()
+      await nextTick()
+      scrollToBottom()
+
+      if (messages.value.length >= 2) {
+        await updatePreview()
+      }
 
       // 如果是第一次对话，发送初始对话消息
-      if (!viewModel && appInfo.value.initPrompt && !hasInitialConversation.value) {
+      if (historyLoaded.value && appInfo.value.initPrompt && !hasInitialConversation.value && isOwner.value) {
         hasInitialConversation.value = true
         await sendInitialMessage(appInfo.value.initPrompt)
       }
@@ -90,6 +103,34 @@ const fetchAppInfo = async () => {
     }
   } catch (e) {
     message.error('获取应用信息失败，' + e)
+  }
+}
+
+const getChatHistory = async () => {
+  if (!appId.value) return
+  try {
+    // 一次性加载 50 条，不搞用户自己自定义加载了
+    const params: listAppChatHistoryParams = {
+      appId: appId.value as unknown as number,
+      pageSize: 50,
+    }
+    const res = await listAppChatHistory(params)
+    if (res.data.code === 0 && res.data.data) {
+     const chatHistories = res.data.data.records || []
+     if (chatHistories.length > 0) {
+       const historyMessage: Message[] = chatHistories.map((chat) => ({
+         type: (chat.messageType === 'user' ? 'user' : 'ai') as 'ai' | 'user',
+         content: chat.message || '',
+         createTime: chat.createTime,
+       })).reverse()
+       messages.value = historyMessage
+     }
+     historyLoaded.value = true
+    } else {
+      message.error('历史消息加载失败, ' + res.data.message)
+    }
+  } catch (e) {
+    message.error('历史消息加载失败, ' + e)
   }
 }
 
@@ -145,7 +186,6 @@ const editApp = () => {
 const deleteApp = async () => {
   if (!appId.value) return
   try {
-
     const res = await deleteAppById({
       id: appId.value,
     })
