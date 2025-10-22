@@ -37,12 +37,11 @@ const messages = ref<Message[]>([])
 const messagesContainer = ref<HTMLElement>()
 const loginUserStore = useLoginUserStore()
 const isGenerating = ref<boolean>(false)
-const hasInitialConversation = ref<boolean>(false)
 const userInput = ref<String>('')
+const initialSended = ref<boolean>(false)
 
 // 渲染相关
 const previewUrl = ref<string>('')
-const loadImage = 'src/assets/page_load.gif'
 const previewReady = ref<boolean>(false)
 const appDetailVisible = ref<boolean>(false)
 const deployUrl = ref<string>('')
@@ -77,25 +76,24 @@ const fetchAppInfo = async () => {
     return
   }
   appId.value = id as string
-  console.log(appId)
+  // console.log(appId)
   try {
     const res = await getAppById({
       id: id as unknown as number,
     })
     if (res.data.code === 0 && res.data.data) {
       appInfo.value = res.data.data
-      await getChatHistory()
-      await nextTick()
-      scrollToBottom()
 
-      if (messages.value.length >= 2) {
-        await updatePreview()
-      }
-
-      // 如果是第一次对话，发送初始对话消息
-      if (historyLoaded.value && appInfo.value.initPrompt && !hasInitialConversation.value && isOwner.value) {
-        hasInitialConversation.value = true
-        await sendInitialMessage(appInfo.value.initPrompt)
+      // 保证只在进入页面时调用一次
+      if (appInfo.value.initPrompt && isOwner.value && !initialSended.value) {
+        await getChatHistory()
+        if (messages.value.length >= 2) {
+          await updatePreview()
+        }
+        if (messages.value.length === 0) {
+          await sendInitialMessage(appInfo.value.initPrompt)
+        }
+        initialSended.value = true
       }
     } else {
       message.error('获取应用消息失败')
@@ -124,6 +122,9 @@ const getChatHistory = async () => {
          createTime: chat.createTime,
        })).reverse()
        messages.value = historyMessage
+       // 到底部
+       await nextTick()
+       scrollToBottom()
      }
      historyLoaded.value = true
     } else {
@@ -161,6 +162,7 @@ const sendInitialMessage = async (prompt: string) => {
   // 生成代码
   isGenerating.value = true
   await generateMessage(prompt, aiMessageIndex)
+  initialSended.value = true
 }
 
 /**
