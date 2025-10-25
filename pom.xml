@@ -108,6 +108,14 @@
             <artifactId>hutool-all</artifactId>
             <version>5.8.38</version>
         </dependency>
+
+        <!-- 对话记忆相关 -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-community-redis-spring-boot-starter</artifactId>
+            <version>1.1.0-beta7</version>
+        </dependency>
+
     </dependencies>
 
     <build>
