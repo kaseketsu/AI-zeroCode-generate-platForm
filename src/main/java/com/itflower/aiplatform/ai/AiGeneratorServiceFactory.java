@@ -1,16 +1,24 @@
 package com.itflower.aiplatform.ai;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import dev.langchain4j.community.store.memory.chat.redis.RedisChatMemoryStore;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.service.AiServices;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.time.Duration;
 
 /**
  * AI 生成器服务工厂
  */
 @Configuration
+@Slf4j
 public class AiGeneratorServiceFactory {
 
 
@@ -27,15 +35,52 @@ public class AiGeneratorServiceFactory {
     private StreamingChatModel streamingChatModel;
 
     /**
+     * redis 记忆仓库
+     */
+    @Resource
+    private RedisChatMemoryStore redisChatMemoryStore;
+
+    /**
+     * caffeine 本地缓存
+     */
+    private final Cache<Long, AiGeneratorService> serviceCache = Caffeine.newBuilder()
+            .maximumSize(1000)
+            .expireAfterWrite(Duration.ofMinutes(30))
+            .expireAfterAccess(Duration.ofMinutes(10))
+            .removalListener((key, value, cause) -> {
+                log.debug("AI 实例已被移除，appId: {}，原因: {}", key, cause);
+            })
+            .build();
+
+    public AiGeneratorService getAiGeneratorService(Long appId) {
+        return serviceCache.get(appId, this::createAiGeneratorService);
+    }
+
+    /**
+     * 获取 AI 生成器服务
+     *
+     * @param appId 根据 appId 生成 memory, 变相定制 aiService
+     * @return AI 生成器服务
+     */
+    private AiGeneratorService createAiGeneratorService(Long appId) {
+        MessageWindowChatMemory store = MessageWindowChatMemory.builder()
+                .chatMemoryStore(redisChatMemoryStore)
+                .maxMessages(20)
+                .id(appId)
+                .build();
+        return AiServices.builder(AiGeneratorService.class)
+                .chatMemory(store)
+                .chatModel(chatModel)
+                .streamingChatModel(streamingChatModel)
+                .build();
+    }
+
+    /**
      * 获取 AI 生成器服务
      *
      * @return AI 生成器服务
      */
-    @Bean
     public AiGeneratorService aiGeneratorService() {
-        return AiServices.builder(AiGeneratorService.class)
-                .chatModel(chatModel)
-                .streamingChatModel(streamingChatModel)
-                .build();
+        return createAiGeneratorService(0L);
     }
 }
