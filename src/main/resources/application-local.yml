@@ -1,4 +1,10 @@
 spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      ttl: 3600
+      password:
   application:
     name: ai-platform
   datasource:
@@ -27,7 +33,7 @@ knife4j:
 langchain4j:
   open-ai:
     chat-model:
-      api-key: sk-0aa71fecc1d841afa977aac143116b35
+      api-key: sk-a9a0274a2e2e4fab87174046e08002ba
       model-name: deepseek-chat
       base-url: https://api.deepseek.com
       strict-json-schema: true
@@ -36,7 +42,7 @@ langchain4j:
       log-requests: true
       log-responses: true
     streaming-chat-model:
-      api-key: sk-0aa71fecc1d841afa977aac143116b35
+      api-key: sk-a9a0274a2e2e4fab87174046e08002ba
       model-name: deepseek-chat
       base-url: https://api.deepseek.com
       max-tokens: 8192

@@ -2,6 +2,7 @@ package com.itflower.aiplatform.ai;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.itflower.aiplatform.service.ChatHistoryService;
 import dev.langchain4j.community.store.memory.chat.redis.RedisChatMemoryStore;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatModel;
@@ -41,6 +42,12 @@ public class AiGeneratorServiceFactory {
     private RedisChatMemoryStore redisChatMemoryStore;
 
     /**
+     * 对话历史相关业务
+     */
+    @Resource
+    private ChatHistoryService chatHistoryService;
+
+    /**
      * caffeine 本地缓存
      */
     private final Cache<Long, AiGeneratorService> serviceCache = Caffeine.newBuilder()
@@ -68,6 +75,8 @@ public class AiGeneratorServiceFactory {
                 .maxMessages(20)
                 .id(appId)
                 .build();
+        // 添加历史聊天记录
+        chatHistoryService.loadChatMemory(appId, store, 20);
         return AiServices.builder(AiGeneratorService.class)
                 .chatMemory(store)
                 .chatModel(chatModel)

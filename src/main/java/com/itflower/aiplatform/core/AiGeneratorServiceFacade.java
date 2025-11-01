@@ -2,6 +2,7 @@ package com.itflower.aiplatform.core;
 
 import cn.hutool.core.util.ObjUtil;
 import com.itflower.aiplatform.ai.AiGeneratorService;
+import com.itflower.aiplatform.ai.AiGeneratorServiceFactory;
 import com.itflower.aiplatform.ai.model.HtmlResponse;
 import com.itflower.aiplatform.ai.model.MultiFileResponse;
 import com.itflower.aiplatform.common.exception.ErrorCode;
@@ -22,7 +23,7 @@ import java.io.File;
 public class AiGeneratorServiceFacade {
 
     @Resource
-    private AiGeneratorService aiGeneratorService;
+    private AiGeneratorServiceFactory serviceFactory;
 
     /**
      * 统一处理流式输出
@@ -59,6 +60,8 @@ public class AiGeneratorServiceFacade {
      */
     public File generateAndSaveFile(String userMessage, GenTypeEnums genTypeEnums, Long appId) {
         ThrowUtils.throwIf(ObjUtil.isNull(genTypeEnums), ErrorCode.PARAMS_ERROR);
+        // 为每个应用创建一个唯一的 aiService
+        AiGeneratorService aiGeneratorService = serviceFactory.getAiGeneratorService(appId);
         return switch (genTypeEnums) {
             case HTML -> {
                 HtmlResponse htmlResponse = aiGeneratorService.generateHtmlPage(userMessage);
@@ -81,6 +84,7 @@ public class AiGeneratorServiceFacade {
      */
     public Flux<String> generateAndSaveFileStream(String userMessage, GenTypeEnums genTypeEnums, Long appId) {
         ThrowUtils.throwIf(ObjUtil.isNull(genTypeEnums), ErrorCode.PARAMS_ERROR);
+        AiGeneratorService aiGeneratorService = serviceFactory.getAiGeneratorService(appId);
         return switch (genTypeEnums) {
             case HTML -> {
                 Flux<String> stringFlux = aiGeneratorService.generateHtmlPageStream(userMessage);
