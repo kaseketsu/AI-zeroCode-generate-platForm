@@ -72,7 +72,7 @@ public class AiGeneratorServiceFactory {
     private AiGeneratorService createAiGeneratorService(Long appId) {
         MessageWindowChatMemory store = MessageWindowChatMemory.builder()
                 .chatMemoryStore(redisChatMemoryStore)
-                .maxMessages(20)
+                .maxMessages(50)
                 .id(appId)
                 .build();
         // 添加历史聊天记录

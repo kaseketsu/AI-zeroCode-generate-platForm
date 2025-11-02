@@ -1,5 +1,6 @@
 package com.itflower.aiplatform.core.saver;
 
+import cn.hutool.core.util.StrUtil;
 import com.itflower.aiplatform.ai.model.MultiFileResponse;
 import com.itflower.aiplatform.model.enums.GenTypeEnums;
 
@@ -26,8 +27,15 @@ public class MultiFileCodeSaverTemplate extends CodeFileSaverTemplate<MultiFileR
      */
     @Override
     protected void saveFiles(String path, MultiFileResponse result) {
-        saveFile(path, "index.html", result.getHtmlCode());
-        saveFile(path, "style.css", result.getCssCode());
-        saveFile(path, "script.js", result.getJsCode());
+        // 有些对话可能和生成页面无关
+        if (StrUtil.isNotBlank(result.getHtmlCode())) {
+            saveFile(path, "index.html", result.getHtmlCode());
+        }
+        if (StrUtil.isNotBlank(result.getCssCode())) {
+            saveFile(path, "style.css", result.getCssCode());
+        }
+        if (StrUtil.isNotBlank(result.getJsCode())) {
+            saveFile(path, "script.js", result.getJsCode());
+        }
     }
 }

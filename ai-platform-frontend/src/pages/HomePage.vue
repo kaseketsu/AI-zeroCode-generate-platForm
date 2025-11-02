@@ -136,7 +136,7 @@ const getMyWorks = async () => {
 }
 
 onMounted(() => {
-  getMyWorks()
+   getMyWorks()
 })
 </script>
 

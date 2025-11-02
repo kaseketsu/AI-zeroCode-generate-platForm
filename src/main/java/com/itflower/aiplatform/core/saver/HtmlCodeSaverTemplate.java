@@ -1,5 +1,6 @@
 package com.itflower.aiplatform.core.saver;
 
+import cn.hutool.core.util.StrUtil;
 import com.itflower.aiplatform.ai.model.HtmlResponse;
 import com.itflower.aiplatform.model.enums.GenTypeEnums;
 
@@ -26,6 +27,9 @@ public class HtmlCodeSaverTemplate extends CodeFileSaverTemplate<HtmlResponse> {
      */
     @Override
     protected void saveFiles(String path, HtmlResponse result) {
-        saveFile(path, "index.html", result.getHtmlCode());
+        // 有些对话可能和生成页面无关
+        if (StrUtil.isNotBlank(result.getHtmlCode())) {
+            saveFile(path, "index.html", result.getHtmlCode());
+        }
     }
 }

@@ -83,18 +83,16 @@ const fetchAppInfo = async () => {
     })
     if (res.data.code === 0 && res.data.data) {
       appInfo.value = res.data.data
-
       // 保证只在进入页面时调用一次
       if (appInfo.value.initPrompt && isOwner.value && !initialSended.value) {
         await getChatHistory()
-        if (messages.value.length >= 2) {
-          await updatePreview()
-        }
         if (messages.value.length === 0) {
           await sendInitialMessage(appInfo.value.initPrompt)
         }
         initialSended.value = true
       }
+      await updatePreview()
+      // console.log(previewUrl.value)
     } else {
       message.error('获取应用消息失败')
       await routers.push('/')

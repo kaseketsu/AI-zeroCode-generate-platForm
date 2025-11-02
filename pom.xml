@@ -54,8 +54,6 @@
             <version>1.1.0-beta7</version>
         </dependency>
 
-
-
         <!-- mybatis-flex 依赖 -->
         <dependency>
             <groupId>com.mybatis-flex</groupId>
@@ -122,18 +120,20 @@
             <artifactId>caffeine</artifactId>
         </dependency>
 
-        <!-- redis 依赖 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
+        <!-- spring session + redis -->
         <dependency>
-            <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-redis</artifactId>
-            <version>0.31.0</version>
+            <groupId>org.springframework.session</groupId>
+            <artifactId>spring-session-data-redis</artifactId>
         </dependency>
+
     </dependencies>
+
+
 
     <build>
         <plugins>
