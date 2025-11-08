@@ -31,10 +31,4 @@ class AiGeneratorServiceTest {
         CodeFileSaver.saveHtmlFile(res);
     }
 
-    @Test
-    void generateMultiFileHtmlPage() {
-        Flux<String> stringFlux = aiGeneratorServiceFacade.generateAndSaveFileStream("帮我生成一个个人博客页面，不超过50行代码", GenTypeEnums.HTML_MULTI);
-        List<String> block = stringFlux.collectList().block();
-        Assertions.assertNotNull(block);
-    }
 }

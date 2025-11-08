@@ -2,12 +2,18 @@ package com.itflower.aiplatform.config;
 
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
+import dev.langchain4j.service.SystemMessage;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 @Configuration
-@ConfigurationProperties(prefix = "langchain4j.openai.chat-model")
+@ConfigurationProperties(prefix = "langchain4j.open-ai.chat-model")
+@Slf4j
+@Data
 public class ReasoningChatModelConfig {
 
     private String baseUrl;
@@ -20,6 +26,7 @@ public class ReasoningChatModelConfig {
      * @return 流式推理
      */
     @Bean
+    @Primary
     public StreamingChatModel reasoningChatModel() {
         // 测试用
         final String modelName = "deepseek-chat";

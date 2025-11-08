@@ -84,15 +84,19 @@ public class AiGeneratorServiceFacade {
      */
     public Flux<String> generateAndSaveFileStream(String userMessage, GenTypeEnums genTypeEnums, Long appId) {
         ThrowUtils.throwIf(ObjUtil.isNull(genTypeEnums), ErrorCode.PARAMS_ERROR);
-        AiGeneratorService aiGeneratorService = serviceFactory.getAiGeneratorService(appId);
+        AiGeneratorService aiGeneratorService = serviceFactory.getAiGeneratorService(appId, genTypeEnums);
         return switch (genTypeEnums) {
             case HTML -> {
                 Flux<String> stringFlux = aiGeneratorService.generateHtmlPageStream(userMessage);
-                yield processStreamCode(stringFlux, GenTypeEnums.HTML, appId);
+                yield  processStreamCode(stringFlux, GenTypeEnums.HTML, appId);
             }
             case HTML_MULTI -> {
                 Flux<String> stringFlux = aiGeneratorService.generateMultiFileHtmlPageStream(userMessage);
                 yield processStreamCode(stringFlux, GenTypeEnums.HTML_MULTI, appId);
+            }
+            case VUE_MULTI -> {
+                Flux<String> stringFlux = aiGeneratorService.generateMultiFileVuePageStream(appId, userMessage);
+                yield processStreamCode(stringFlux, GenTypeEnums.VUE_MULTI, appId);
             }
             default -> throw new RuntimeException("不支持的生成类型, " + genTypeEnums.getValue());
         };

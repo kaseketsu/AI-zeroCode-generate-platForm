@@ -2,14 +2,20 @@ package com.itflower.aiplatform.ai;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.itflower.aiplatform.ai.tools.FileWriteTool;
+import com.itflower.aiplatform.config.ReasoningChatModelConfig;
+import com.itflower.aiplatform.model.enums.GenTypeEnums;
 import com.itflower.aiplatform.service.ChatHistoryService;
 import dev.langchain4j.community.store.memory.chat.redis.RedisChatMemoryStore;
+import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
+import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import dev.langchain4j.service.AiServices;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -33,7 +39,7 @@ public class AiGeneratorServiceFactory {
      * 流式语言模型
      */
     @Resource
-    private StreamingChatModel streamingChatModel;
+    private StreamingChatModel openAistreamingChatModel;
 
     /**
      * redis 记忆仓库
@@ -48,6 +54,12 @@ public class AiGeneratorServiceFactory {
     private ChatHistoryService chatHistoryService;
 
     /**
+     * vue 用推理流式模型
+     */
+    @Resource
+    private StreamingChatModel vueStreamingChatModel;
+
+    /**
      * caffeine 本地缓存
      */
     private final Cache<Long, AiGeneratorService> serviceCache = Caffeine.newBuilder()
@@ -59,8 +71,24 @@ public class AiGeneratorServiceFactory {
             })
             .build();
 
+    /**
+     * 只根据 appId 获取 AiService
+     *
+     * @param appId appId
+     * @return html / multi 模型
+     */
     public AiGeneratorService getAiGeneratorService(Long appId) {
-        return serviceCache.get(appId, this::createAiGeneratorService);
+        return serviceCache.get(appId, k -> createAiGeneratorService(appId, GenTypeEnums.HTML));
+    }
+
+    /**
+     * 根据输出模式获取流式模型
+     *
+     * @param appId appId
+     * @return aiService
+     */
+    public AiGeneratorService getAiGeneratorService(Long appId, GenTypeEnums genType) {
+        return serviceCache.get(appId, k -> createAiGeneratorService(appId, genType));
     }
 
     /**
@@ -69,7 +97,7 @@ public class AiGeneratorServiceFactory {
      * @param appId 根据 appId 生成 memory, 变相定制 aiService
      * @return AI 生成器服务
      */
-    private AiGeneratorService createAiGeneratorService(Long appId) {
+    private AiGeneratorService createAiGeneratorService(Long appId, GenTypeEnums genType) {
         MessageWindowChatMemory store = MessageWindowChatMemory.builder()
                 .chatMemoryStore(redisChatMemoryStore)
                 .maxMessages(50)
@@ -77,11 +105,25 @@ public class AiGeneratorServiceFactory {
                 .build();
         // 添加历史聊天记录
         chatHistoryService.loadChatMemory(appId, store, 20);
-        return AiServices.builder(AiGeneratorService.class)
-                .chatMemory(store)
-                .chatModel(chatModel)
-                .streamingChatModel(streamingChatModel)
-                .build();
+        // 根据 genType 返回不同的模型
+        return switch (genType) {
+            case HTML_MULTI, HTML -> AiServices.builder(AiGeneratorService.class)
+                    .chatMemory(store)
+                    .chatModel(chatModel)
+                    .streamingChatModel(openAistreamingChatModel)
+                    .build();
+            case VUE_MULTI -> AiServices.builder(AiGeneratorService.class)
+                    .chatMemory(store)
+                    .chatMemoryProvider(memoryId -> store)
+                    .streamingChatModel(vueStreamingChatModel)
+                    .tools(new FileWriteTool())
+                    .hallucinatedToolNameStrategy(req -> ToolExecutionResultMessage.from(
+                            req, "Error: there is no tool called " + req.name()
+                    ))
+                    .build();
+            default -> throw new IllegalStateException("不支持的生成类型:  " + genType.getValue());
+
+        };
     }
 
     /**
@@ -90,6 +132,17 @@ public class AiGeneratorServiceFactory {
      * @return AI 生成器服务
      */
     public AiGeneratorService aiGeneratorService() {
-        return createAiGeneratorService(0L);
+        return createAiGeneratorService(0L, GenTypeEnums.HTML);
+    }
+
+    /**
+     * 生成 cacheKey
+     *
+     * @param appId   应用 id
+     * @param genType 生成类型枚举
+     * @return cacheKey
+     */
+    private String buildKey(Long appId, GenTypeEnums genType) {
+        return appId + "_" + genType.getValue();
     }
 }

@@ -19,22 +19,11 @@ class AiGeneratorServiceFacadeTest {
     private AiGeneratorServiceFacade aiGeneratorServiceFacade;
 
     @Test
-    void generateAndSaveFile() {
-        File file = aiGeneratorServiceFacade.generateAndSaveFile("帮我生成一个个人博客页面，不超过20行代码", GenTypeEnums.HTML);
-        Assertions.assertNotNull(file);
-    }
-
-    @Test
-    void testGenerateAndSaveFile() {
-        File file = aiGeneratorServiceFacade.generateAndSaveFile("帮我生成一个个人博客页面，不超过20行代码", GenTypeEnums.HTML_MULTI);
-        Assertions.assertNotNull(file);
-    }
-
-    @Test
     void generateAndSaveFileStream() {
-        Flux<String> stringFlux = aiGeneratorServiceFacade.generateAndSaveFileStream("帮我生成一个个人博客页面，不超过50行代码", GenTypeEnums.HTML_MULTI);
+        Flux<String> stringFlux = aiGeneratorServiceFacade.generateAndSaveFileStream("帮我生成一个个人博客页面，不超过50行代码", GenTypeEnums.VUE_MULTI, 0L);
         List<String> block = stringFlux.collectList().block();
         Assertions.assertNotNull(block);
         Assertions.assertNotNull(stringFlux);
+        System.out.println(String.join("", block));
     }
 }

@@ -2,7 +2,9 @@ package com.itflower.aiplatform.ai;
 
 import com.itflower.aiplatform.ai.model.HtmlResponse;
 import com.itflower.aiplatform.ai.model.MultiFileResponse;
+import dev.langchain4j.service.MemoryId;
 import dev.langchain4j.service.SystemMessage;
+import dev.langchain4j.service.UserMessage;
 import reactor.core.publisher.Flux;
 
 /**
@@ -45,4 +47,13 @@ public interface AiGeneratorService {
      */
     @SystemMessage(fromResource = "prompt/codegen-multi-file-system-prompt.txt")
     Flux<String> generateMultiFileHtmlPageStream(String userMessage);
+
+    /**
+     * 生成 vue 项目页面（流式）
+     *
+     * @param userMessage prompt
+     * @return vue 页面
+     */
+    @SystemMessage(fromResource = "prompt/codegen-vue-project-system-prompt.txt")
+    Flux<String> generateMultiFileVuePageStream(@MemoryId Long memoryId, @UserMessage String userMessage);
 }
