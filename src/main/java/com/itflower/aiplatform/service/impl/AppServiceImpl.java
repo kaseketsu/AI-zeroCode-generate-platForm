@@ -410,7 +410,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         chatHistoryService.addChatHistory(appId, userId, message, MessageTypeEnum.USER_MESSAGE.getValue());
 
         Flux<String> contentFlux = aiGeneratorServiceFacade.generateAndSaveFileStream(message, enumByValue, appId);
-        // 对 AI 对话进行处理
+        // todo: 后续修改为统一流处理
         StringBuilder sb = new StringBuilder();
         return contentFlux.doOnNext(sb::append)
                 .doOnComplete(() -> {

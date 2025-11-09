@@ -26,8 +26,7 @@ public class ReasoningChatModelConfig {
      * @return 流式推理
      */
     @Bean
-    @Primary
-    public StreamingChatModel reasoningChatModel() {
+    public StreamingChatModel reasoningStreamingChatModel() {
         // 测试用
         final String modelName = "deepseek-chat";
         final int maxTokens = 8192;

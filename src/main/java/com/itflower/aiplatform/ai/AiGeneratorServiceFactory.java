@@ -39,7 +39,7 @@ public class AiGeneratorServiceFactory {
      * 流式语言模型
      */
     @Resource
-    private StreamingChatModel openAistreamingChatModel;
+    private StreamingChatModel openAiStreamingChatModel;
 
     /**
      * redis 记忆仓库
@@ -57,7 +57,7 @@ public class AiGeneratorServiceFactory {
      * vue 用推理流式模型
      */
     @Resource
-    private StreamingChatModel vueStreamingChatModel;
+    private StreamingChatModel reasoningStreamingChatModel;
 
     /**
      * caffeine 本地缓存
@@ -104,18 +104,18 @@ public class AiGeneratorServiceFactory {
                 .id(appId)
                 .build();
         // 添加历史聊天记录
-        chatHistoryService.loadChatMemory(appId, store, 20);
+        chatHistoryService.loadChatMemory(appId, store, 50);
         // 根据 genType 返回不同的模型
         return switch (genType) {
             case HTML_MULTI, HTML -> AiServices.builder(AiGeneratorService.class)
                     .chatMemory(store)
                     .chatModel(chatModel)
-                    .streamingChatModel(openAistreamingChatModel)
+                    .streamingChatModel(openAiStreamingChatModel)
                     .build();
             case VUE_MULTI -> AiServices.builder(AiGeneratorService.class)
                     .chatMemory(store)
                     .chatMemoryProvider(memoryId -> store)
-                    .streamingChatModel(vueStreamingChatModel)
+                    .streamingChatModel(reasoningStreamingChatModel)
                     .tools(new FileWriteTool())
                     .hallucinatedToolNameStrategy(req -> ToolExecutionResultMessage.from(
                             req, "Error: there is no tool called " + req.name()
