@@ -22,7 +22,7 @@ public enum StreamingMessageTypeEnum {
         this.value = value;
     }
 
-    public StreamingMessageTypeEnum fromValue(String value) {
+    public static StreamingMessageTypeEnum fromValue(String value) {
         if (StrUtil.isEmpty(value)) {
             return null;
         }
