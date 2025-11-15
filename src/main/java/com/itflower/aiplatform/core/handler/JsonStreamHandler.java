@@ -6,6 +6,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.itflower.aiplatform.ai.model.message.*;
 import com.itflower.aiplatform.model.entity.User;
+import com.itflower.aiplatform.model.enums.MessageTypeEnum;
 import com.itflower.aiplatform.model.vo.LoginUserVO;
 import com.itflower.aiplatform.service.ChatHistoryService;
 import io.lettuce.core.StreamMessage;
@@ -41,8 +42,18 @@ public class JsonStreamHandler {
 
         StringBuilder chatMessageBuilder = new StringBuilder();
         Set<String> seenToolId = new HashSet<>();
-        // todo: json 流处理
-        return null;
+        return originFlux.map(chunk -> {
+            String trans = handleJsonStr(chunk, seenToolId);
+            chatMessageBuilder.append(trans);
+            return trans;
+        }).doOnComplete(() -> {
+            String completed = chatMessageBuilder.toString();
+            chatHistoryService.addChatHistory(appId, loginUser.getId(), completed, MessageTypeEnum.AI_MESSAGE.getValue());
+        }).doOnError(throwable -> {
+            String msg = String.format("json 流处理失败，原因是: %s", throwable.getMessage());
+            log.error("json 流处理失败，原因是: {}", throwable.getMessage());
+            chatHistoryService.addChatHistory(appId, loginUser.getId(), msg, MessageTypeEnum.AI_MESSAGE.getValue());
+        });
     }
 
     /**
