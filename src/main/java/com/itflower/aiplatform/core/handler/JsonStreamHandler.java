@@ -85,7 +85,7 @@ public class JsonStreamHandler {
                 ToolExecutedMessage toolExecutedMessage = JSONUtil.toBean(jsonStr, ToolExecutedMessage.class);
                 String arguments = toolExecutedMessage.getArguments();
                 JSONObject entries = JSONUtil.parseObj(arguments);
-                String relativeFilePath = entries.getStr("relativeFilePath");
+                String relativeFilePath = entries.getStr("relativePath");
                 String content = entries.getStr("content");
                 String suffix = FileUtil.getSuffix(relativeFilePath);
                 String output = String.format("""
