@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @NoArgsConstructor
-public class ToolExecutedMessage {
+public class ToolExecutedMessage extends StreamingMessage{
 
     private String id;
     private String name;
@@ -16,6 +16,7 @@ public class ToolExecutedMessage {
     private String result;
 
     public ToolExecutedMessage(ToolExecution toolExecution) {
+        super(StreamingMessageTypeEnum.TOOL_EXECUTED.getValue());
         this.id = toolExecution.request().id();
         this.name = toolExecution.request().name();
         this.arguments = toolExecution.request().arguments();

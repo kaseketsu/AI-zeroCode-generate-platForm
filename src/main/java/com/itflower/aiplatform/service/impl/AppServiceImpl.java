@@ -13,6 +13,7 @@ import com.itflower.aiplatform.common.exception.ThrowUtils;
 import com.itflower.aiplatform.constant.AppConstant;
 import com.itflower.aiplatform.constant.UserConstant;
 import com.itflower.aiplatform.core.AiGeneratorServiceFacade;
+import com.itflower.aiplatform.core.handler.StreamExecutor;
 import com.itflower.aiplatform.model.dto.app.admin.AppUpdateRequestAdmin;
 import com.itflower.aiplatform.model.dto.app.user.AppAddRequest;
 import com.itflower.aiplatform.model.dto.app.user.AppDeployRequest;
@@ -65,6 +66,9 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
     @Resource
     ChatHistoryService chatHistoryService;
 
+    @Resource
+    StreamExecutor streamExecutor;
+
     /**
      * 创建 app
      *
@@ -87,7 +91,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         app.setUserId(loginUser.getId());
         app.setAppName(initialPrompt.substring(0, Math.min(initialPrompt.length(), 12)));
         app.setInitPrompt(initialPrompt);
-        app.setCodeGenType(GenTypeEnums.HTML_MULTI.getValue());
+        // 暂时硬编码
+        app.setCodeGenType(GenTypeEnums.VUE_MULTI.getValue());
 
         // 4. 存入数据库
         boolean res = this.save(app);
@@ -392,7 +397,6 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         // 校验参数
         ThrowUtils.throwIf(ObjUtil.isNull(appId) || appId <= 0, ErrorCode.PARAMS_ERROR);
         ThrowUtils.throwIf(StrUtil.isBlank(message), ErrorCode.PARAMS_ERROR, "用户消息不能为空！");
-
         // 校验权限
         App app = this.getById(appId);
         Long userId = app.getUserId();
@@ -400,28 +404,32 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         Long loginUserId = loginUser.getId();
         ThrowUtils.throwIf(ObjUtil.isNull(loginUser), ErrorCode.NO_AUTH_ERROR);
         ThrowUtils.throwIf(!userId.equals(loginUserId), ErrorCode.NO_AUTH_ERROR);
-
         // 调用门面类
         String codeGenType = app.getCodeGenType();
         GenTypeEnums enumByValue = GenTypeEnums.getEnumByValue(codeGenType);
         ThrowUtils.throwIf(enumByValue == null, ErrorCode.SYSTEM_ERROR, "不支持的生成类型");
-
         // 插入对话添加逻辑
         chatHistoryService.addChatHistory(appId, userId, message, MessageTypeEnum.USER_MESSAGE.getValue());
-
         Flux<String> contentFlux = aiGeneratorServiceFacade.generateAndSaveFileStream(message, enumByValue, appId);
-        // todo: 后续修改为统一流处理
-        StringBuilder sb = new StringBuilder();
-        return contentFlux.doOnNext(sb::append)
-                .doOnComplete(() -> {
-                    String res = sb.toString();
-                    if (StrUtil.isNotBlank(res)) {
-                        chatHistoryService.addChatHistory(appId, userId, res, MessageTypeEnum.AI_MESSAGE.getValue());
-                    }
-                }).doOnError(error -> {
-                    String errorMessage = "AI 回复失败, " + error.getMessage();
-                    chatHistoryService.addChatHistory(appId, userId, errorMessage, MessageTypeEnum.AI_MESSAGE.getValue());
-                });
+        // 使用流处理器统一处理
+        try {
+            return streamExecutor.doHandle(contentFlux, appId, loginUser, enumByValue);
+        } catch (Exception e) {
+            String msg = String.format("对话生成流处理失败，发生在 AppServiceImpl, 原因是: %s", e.getMessage());
+            log.error(msg);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, msg);
+        }
+//        StringBuilder sb = new StringBuilder();
+//        return contentFlux.doOnNext(sb::append)
+//                .doOnComplete(() -> {
+//                    String res = sb.toString();
+//                    if (StrUtil.isNotBlank(res)) {
+//                        chatHistoryService.addChatHistory(appId, userId, res, MessageTypeEnum.AI_MESSAGE.getValue());
+//                    }
+//                }).doOnError(error -> {
+//                    String errorMessage = "AI 回复失败, " + error.getMessage();
+//                    chatHistoryService.addChatHistory(appId, userId, errorMessage, MessageTypeEnum.AI_MESSAGE.getValue());
+//                });
     }
 
     /**

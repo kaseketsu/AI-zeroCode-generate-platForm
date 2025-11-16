@@ -22,6 +22,7 @@ import java.util.Set;
  * json 流处理器
  */
 @Slf4j
+@Component
 public class JsonStreamHandler {
 
     @Resource

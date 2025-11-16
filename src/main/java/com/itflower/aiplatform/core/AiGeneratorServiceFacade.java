@@ -41,9 +41,7 @@ public class AiGeneratorServiceFacade {
     private Flux<String> processStreamCode(Flux<String> stream, GenTypeEnums genEnum, Long appId) {
         StringBuilder sb = new StringBuilder();
         return stream
-                .doOnNext(chunk -> {
-                    sb.append(chunk);
-                })
+                .doOnNext(sb::append)
                 .doOnComplete(() -> {
                     try {
                         String res = sb.toString();
@@ -101,8 +99,8 @@ public class AiGeneratorServiceFacade {
                 yield processStreamCode(stringFlux, GenTypeEnums.HTML_MULTI, appId);
             }
             case VUE_MULTI -> {
-                Flux<String> stringFlux = aiGeneratorService.generateMultiFileVuePageStream(appId, userMessage);
-                yield processStreamCode(stringFlux, GenTypeEnums.VUE_MULTI, appId);
+                TokenStream tokenStream = aiGeneratorService.generateMultiFileVuePageStream(appId, userMessage);
+                yield processVueStream(tokenStream);
             }
             default -> throw new RuntimeException("不支持的生成类型, " + genTypeEnums.getValue());
         };
