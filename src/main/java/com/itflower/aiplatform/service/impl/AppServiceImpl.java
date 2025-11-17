@@ -13,6 +13,7 @@ import com.itflower.aiplatform.common.exception.ThrowUtils;
 import com.itflower.aiplatform.constant.AppConstant;
 import com.itflower.aiplatform.constant.UserConstant;
 import com.itflower.aiplatform.core.AiGeneratorServiceFacade;
+import com.itflower.aiplatform.core.build.VueProjectBuilder;
 import com.itflower.aiplatform.core.handler.StreamExecutor;
 import com.itflower.aiplatform.model.dto.app.admin.AppUpdateRequestAdmin;
 import com.itflower.aiplatform.model.dto.app.user.AppAddRequest;
@@ -68,6 +69,9 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
 
     @Resource
     StreamExecutor streamExecutor;
+
+    @Resource
+    VueProjectBuilder vueProjectBuilder;
 
     /**
      * 创建 app
@@ -467,9 +471,18 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
             deployKey = RandomUtil.randomString(6);
             app.setDeployKey(deployKey);
         }
+        GenTypeEnums typeEnum = GenTypeEnums.getEnumByValue(codeGenType);
+        if (typeEnum == GenTypeEnums.VUE_MULTI) {
+            if (!VueProjectBuilder.isBuildSuccess(outputPath)) {
+                boolean res = vueProjectBuilder.buildProject(new File(outputPath));
+                ThrowUtils.throwIf(!res, ErrorCode.OPERATION_ERROR, "构建 vue 项目失败！");
+            }
+            file = new File(outputPath, "dist");
+            log.info("vue 项目构建成功，地址为: {}", file.getAbsolutePath());
+        }
         String deployPath = AppConstant.DEPLOY_PATH + File.separator + deployKey;
         try {
-            FileUtil.copyContent(new File(outputPath), new File(deployPath), true);
+            FileUtil.copyContent(file, new File(deployPath), true);
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "应用部署失败，" + e.getMessage());
         }

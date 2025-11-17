@@ -52,6 +52,18 @@ public class VueProjectBuilder {
         }
     }
 
+    public static boolean isBuildSuccess(String wordDir) {
+        File workDir = new File(wordDir);
+        if (!workDir.exists() || !workDir.isDirectory()) {
+            return false;
+        }
+        File dist = new File(wordDir, "dist");
+        if (!dist.exists() || !dist.isDirectory()) {
+            return false;
+        }
+        return true;
+    }
+
 
     public boolean buildProject(File workDirectory) {
         try {
@@ -85,7 +97,7 @@ public class VueProjectBuilder {
         }
     }
 
-    public void commandProcessorAsync(File workDirectory) {
+    public void buildProjectAsync(File workDirectory) {
         Thread.ofVirtual().name("vue_builder" + System.currentTimeMillis()).start(() -> {
             try {
                 buildProject(workDirectory);

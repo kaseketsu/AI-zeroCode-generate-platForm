@@ -5,6 +5,8 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.itflower.aiplatform.ai.model.message.*;
+import com.itflower.aiplatform.constant.AppConstant;
+import com.itflower.aiplatform.core.build.VueProjectBuilder;
 import com.itflower.aiplatform.model.entity.User;
 import com.itflower.aiplatform.model.enums.MessageTypeEnum;
 import com.itflower.aiplatform.model.vo.LoginUserVO;
@@ -15,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 
+import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -27,6 +30,9 @@ public class JsonStreamHandler {
 
     @Resource
     ChatHistoryService chatHistoryService;
+
+    @Resource
+    VueProjectBuilder vueProjectBuilder;
 
     /**
      * 对 json 流进行处理，存入对话历史记录
@@ -50,6 +56,7 @@ public class JsonStreamHandler {
         }).doOnComplete(() -> {
             String completed = chatMessageBuilder.toString();
             chatHistoryService.addChatHistory(appId, loginUser.getId(), completed, MessageTypeEnum.AI_MESSAGE.getValue());
+            vueProjectBuilder.buildProjectAsync(new File(AppConstant.OUT_PUT_PATH + "/vue_project_" + appId));
         }).doOnError(throwable -> {
             String msg = String.format("json 流处理失败，原因是: %s", throwable.getMessage());
             log.error("json 流处理失败，原因是: {}", throwable.getMessage());
