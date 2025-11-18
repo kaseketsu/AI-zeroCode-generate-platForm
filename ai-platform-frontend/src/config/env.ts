@@ -1,6 +1,8 @@
 
 
 // API 基础地址, 打包后用配置地址
+import { codeGenTypeEnums } from '@/utils/codeGenType.ts'
+
 export const API_BASE_URL =  import.meta.env.VITE_API_BASE_URL || 'http://localhost:8123/api';
 
 // 暂时用作本地启动
@@ -15,7 +17,11 @@ export const STATIC_BASE_URL = API_BASE_URL + '/static';
  * @param appId appId
  */
 export const getStaticBaseUrl = (codeGenType: any, appId: string) => {
-  return `${STATIC_BASE_URL}/${codeGenType}_${appId}/`;
+  const baseUrl =  `${STATIC_BASE_URL}/${codeGenType}_${appId}/`;
+  if (codeGenType === codeGenTypeEnums.VUE_PROJECT) {
+    return `${baseUrl}/dist/index.html`;
+  }
+  return baseUrl
 }
 
 /**

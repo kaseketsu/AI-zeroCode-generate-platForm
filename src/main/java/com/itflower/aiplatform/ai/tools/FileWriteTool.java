@@ -6,6 +6,7 @@ import com.itflower.aiplatform.common.exception.ThrowUtils;
 import com.itflower.aiplatform.constant.AppConstant;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
+import dev.langchain4j.agent.tool.ToolMemoryId;
 import dev.langchain4j.service.MemoryId;
 import lombok.extern.slf4j.Slf4j;
 
@@ -23,7 +24,7 @@ public class FileWriteTool {
             String relativePath,
             @P("具体写入内容")
             String content,
-            @MemoryId Long appId
+            @ToolMemoryId Long appId
     ) {
         try {
             ThrowUtils.throwIf(StrUtil.isBlank(relativePath), ErrorCode.PARAMS_ERROR, "vue 文件写入路径为空");
