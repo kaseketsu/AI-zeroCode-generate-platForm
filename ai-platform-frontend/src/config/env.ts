@@ -19,7 +19,8 @@ export const STATIC_BASE_URL = API_BASE_URL + '/static';
 export const getStaticBaseUrl = (codeGenType: any, appId: string) => {
   const baseUrl =  `${STATIC_BASE_URL}/${codeGenType}_${appId}/`;
   if (codeGenType === codeGenTypeEnums.VUE_PROJECT) {
-    return `${baseUrl}/dist/index.html`;
+    console.log(codeGenType)
+    return `${baseUrl}dist/index.html`;
   }
   return baseUrl
 }

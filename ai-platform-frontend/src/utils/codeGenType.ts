@@ -1,7 +1,7 @@
 export const codeGenTypeEnums = {
   HTML: 'html',
   MULTI_FILE: 'html-multi',
-  VUE_PROJECT: 'vue-project',
+  VUE_PROJECT: 'vue_project',
 }
 
 export const codeGenTypeConfig = {

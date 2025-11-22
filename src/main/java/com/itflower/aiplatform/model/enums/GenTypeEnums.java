@@ -8,7 +8,7 @@ public enum GenTypeEnums {
 
     HTML("HTML 原生模板代码", "html"),
     HTML_MULTI("HTML 多文件模板代码", "html_multi"),
-    VUE_MULTI("vue 多文件模板代码", "vue_multi");
+    VUE_MULTI("vue 多文件模板代码", "vue_project");
 
     // 描述
     private final String desc;

@@ -31,8 +31,8 @@ public class VueProjectBuilder {
                     command.split("\\s+")
             );
             // 检测是否超时
-            boolean isOverTime = exec.waitFor(waitTime, TimeUnit.SECONDS);
-            if (isOverTime) {
+            boolean finished = exec.waitFor(waitTime, TimeUnit.SECONDS);
+            if (!finished) {
                 log.error("执行超时({}秒)", waitTime);
                 return false;
             }
@@ -120,7 +120,7 @@ public class VueProjectBuilder {
 
     private String buildCommand(String command) {
         if (isWindows()) {
-            return command + ".cmd";
+            return "cmd /c " + command;
         }
         return command;
     }
