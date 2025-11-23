@@ -6,6 +6,7 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
+import com.itflower.aiplatform.ai.AiRoutingService;
 import com.itflower.aiplatform.common.DeleteRequest;
 import com.itflower.aiplatform.common.exception.BusinessException;
 import com.itflower.aiplatform.common.exception.ErrorCode;
@@ -72,6 +73,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
 
     @Resource
     VueProjectBuilder vueProjectBuilder;
+    @Resource
+    private AiRoutingService aiRoutingService;
 
     /**
      * 创建 app
@@ -85,19 +88,19 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         ThrowUtils.throwIf(ObjUtil.isNull(appAddRequest), ErrorCode.PARAMS_ERROR);
         String initialPrompt = appAddRequest.getInitialPrompt();
         ThrowUtils.throwIf(StrUtil.isBlank(initialPrompt), ErrorCode.PARAMS_ERROR, "初始化提示不能为空！");
-
         // 2. 获取当前用户
         User loginUser = userService.getLoginUser(httpServletRequest);
         ThrowUtils.throwIf(ObjUtil.isNull(loginUser), ErrorCode.NOT_LOGIN_ERROR);
-
         // 3. 填充 app
         App app = new App();
         app.setUserId(loginUser.getId());
         app.setAppName(initialPrompt.substring(0, Math.min(initialPrompt.length(), 12)));
         app.setInitPrompt(initialPrompt);
         // 暂时硬编码
-        app.setCodeGenType(GenTypeEnums.VUE_MULTI.getValue());
-
+//        app.setCodeGenType(GenTypeEnums.VUE_MULTI.getValue());
+        // ai 路由
+        GenTypeEnums enums = aiRoutingService.aiRouting(appAddRequest.getInitialPrompt());
+        app.setCodeGenType(enums.getValue());
         // 4. 存入数据库
         boolean res = this.save(app);
         ThrowUtils.throwIf(!res, ErrorCode.OPERATION_ERROR, "app 创建失败");
