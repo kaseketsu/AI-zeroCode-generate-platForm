@@ -5,6 +5,9 @@ import { codeGenTypeEnums } from '@/utils/codeGenType.ts'
 
 export const API_BASE_URL =  import.meta.env.VITE_API_BASE_URL || 'http://localhost:8123/api';
 
+// 应用部署域名
+export const DEPLOY_DOMAIN = import.meta.env.VITE_DEPLOY_DOMAIN || 'http://localhost'
+
 // 暂时用作本地启动
 export const HOST_URL = 'http://localhost';
 
