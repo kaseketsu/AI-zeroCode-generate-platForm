@@ -3,25 +3,35 @@ package com.itflower.aiplatform.controller;
 import cn.hutool.json.JSONUtil;
 import com.itflower.aiplatform.annotation.AuthCheck;
 import com.itflower.aiplatform.common.DeleteRequest;
+import com.itflower.aiplatform.common.exception.ErrorCode;
+import com.itflower.aiplatform.common.exception.ThrowUtils;
 import com.itflower.aiplatform.common.response.BaseResponse;
 import com.itflower.aiplatform.common.response.ResultUtils;
+import com.itflower.aiplatform.constant.AppConstant;
 import com.itflower.aiplatform.constant.UserConstant;
 import com.itflower.aiplatform.model.dto.app.admin.AppUpdateRequestAdmin;
 import com.itflower.aiplatform.model.dto.app.user.AppAddRequest;
 import com.itflower.aiplatform.model.dto.app.user.AppDeployRequest;
 import com.itflower.aiplatform.model.dto.app.user.AppQueryRequest;
 import com.itflower.aiplatform.model.dto.app.user.AppUpdateRequest;
+import com.itflower.aiplatform.model.entity.App;
+import com.itflower.aiplatform.model.entity.User;
 import com.itflower.aiplatform.model.vo.AppVO;
 import com.itflower.aiplatform.service.AppService;
+import com.itflower.aiplatform.service.CodeDownloadService;
+import com.itflower.aiplatform.service.UserService;
 import com.mybatisflex.core.paginate.Page;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.File;
 import java.util.Map;
 
 /**
@@ -35,6 +45,10 @@ public class AppController {
 
     @Resource
     private AppService appService;
+    @Autowired
+    private UserService userService;
+    @Resource
+    private CodeDownloadService codeDownloadService;
 
 
     /**
@@ -212,6 +226,26 @@ public class AppController {
     public BaseResponse<AppVO> getAppDetailByIdAdmin(Long id) {
         AppVO appDetailById = appService.getAppDetailById(id);
         return ResultUtils.success(appDetailById);
+    }
+
+    @GetMapping("/download/{appId}")
+    public void downloadApp(@PathVariable Long appId, HttpServletResponse response, HttpServletRequest request) {
+        // 校验参数
+        ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR);
+        // 获取 app
+        App app = appService.getById(appId);
+        ThrowUtils.throwIf(app == null || app.getId() <= 0, ErrorCode.PARAMS_ERROR);
+        // 校验用户权限
+        User loginUser = userService.getLoginUser(request);
+        ThrowUtils.throwIf(loginUser == null || loginUser.getId() <= 0, ErrorCode.NO_AUTH_ERROR);
+        ThrowUtils.throwIf(!loginUser.getId().equals(app.getUserId()), ErrorCode.NO_AUTH_ERROR);
+        // 创建路径
+        String filePath = AppConstant.OUT_PUT_PATH + File.separator + app.getCodeGenType() + "_" + appId;
+        // 检查是否存在
+        File file = new File(filePath);
+        ThrowUtils.throwIf(!file.exists(), ErrorCode.PARAMS_ERROR, "应用代码不存在，请先创建应用");
+        // 执行下载
+        codeDownloadService.downloadCodeAsZip(filePath, String.valueOf(appId), response);
     }
 
 }
