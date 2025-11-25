@@ -3,7 +3,7 @@
     <a-col flex="200px">
       <RouterLink to="/">
         <div class="title-bar">
-          <img src="@/assets/logo5.png" alt="logo" class="logo" />
+          <img src="../../assets/aiAvatar.png" alt="logo" class="logo" />
           <div class="title">AI智能体</div>
         </div>
       </RouterLink>

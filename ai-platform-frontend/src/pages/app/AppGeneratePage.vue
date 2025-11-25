@@ -60,7 +60,7 @@
                 <a-avatar :src="aiAvatar" />
               </div>
               <div class="message-content">
-                <MarkdownRenderer v-if="message.content" :content="message.content" />
+                <MarkdownRender v-if="message.content" :content="message.content" />
                 <div v-if="message.loading" class="loading-indicator">
                   <a-spin size="small" />
                   <span>AI 正在思考...</span>
@@ -230,6 +230,7 @@ import { type ElementInfo, VisualEditor } from '@/utils/visualEdit.ts'
 import { deleteAppById, deploy, getAppById } from '@/api/appController.ts'
 import { API_BASE_URL, getStaticBaseUrl } from '@/config/env.ts'
 import { codeGenTypeEnums, formatCodeGenType } from '@/utils/codeGenType.ts'
+import MarkdownRender from '@/components/MarkdownRender.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -312,6 +313,7 @@ const loadChatHistory = async (isLoadMore = false) => {
     const res = await listAppChatHistory(params)
     if (res.data.code === 0 && res.data.data) {
       const chatHistories = res.data.data.records || []
+      console.log("chatHistory", chatHistories)
       if (chatHistories.length > 0) {
         // 将对话历史转换为消息格式，并按时间正序排列（老消息在前）
         const historyMessages: Message[] = chatHistories
@@ -352,7 +354,7 @@ const loadMoreHistory = async () => {
 
 // 获取应用信息
 const fetchAppInfo = async () => {
-  const id = route.params.id as string
+  const id = route.params.appId as string
   if (!id) {
     message.error('应用ID不存在')
     router.push('/')
@@ -482,7 +484,7 @@ const generateCode = async (userMessage: string, aiMessageIndex: number) => {
       message: userMessage,
     })
 
-    const url = `${baseURL}/app/chat/gen/code?${params}`
+    const url = `${baseURL}/app/user/chat/gen?${params}`
 
     // 创建 EventSource 连接
     eventSource = new EventSource(url, {
@@ -499,10 +501,12 @@ const generateCode = async (userMessage: string, aiMessageIndex: number) => {
         // 解析JSON包装的数据
         const parsed = JSON.parse(event.data)
         const content = parsed.d
+        console.log("content: " + content)
 
         // 拼接内容
         if (content !== undefined && content !== null) {
           fullContent += content
+          console.log("fullContent: " + fullContent)
           messages.value[aiMessageIndex].content = fullContent
           messages.value[aiMessageIndex].loading = false
           scrollToBottom()
