@@ -17,7 +17,7 @@ public interface AppConstant {
     /**
      * 文件输出路径
      */
-    String OUT_PUT_PATH = System.getProperty("user.dir") + "/tmp/code_output";
+    String  OUT_PUT_PATH = System.getProperty("user.dir") + "/tmp/code_output";
 
     /**
      * 文件部署路径

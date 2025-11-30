@@ -1,6 +1,8 @@
 package com.itflower.aiplatform.ai.tools;
 
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import com.itflower.aiplatform.common.exception.ErrorCode;
 import com.itflower.aiplatform.common.exception.ThrowUtils;
 import com.itflower.aiplatform.constant.AppConstant;
@@ -9,6 +11,7 @@ import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agent.tool.ToolMemoryId;
 import dev.langchain4j.service.MemoryId;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,7 +19,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
 @Slf4j
-public class FileWriteTool {
+@Component
+public class FileWriteTool extends BaseTool {
 
     @Tool("写入文件到具体的路径")
     public String writeFile(
@@ -54,5 +58,28 @@ public class FileWriteTool {
             throw new RuntimeException(e);
         }
 
+    }
+
+    @Override
+    public String getToolName() {
+        return "writeFile";
+    }
+
+    @Override
+    public String displayName() {
+        return "写入文件";
+    }
+
+    @Override
+    public String getToolExecutedContent(JSONObject arguments) {
+        String relativeFilePath = arguments.getStr("relativePath");
+        String content = arguments.getStr("content");
+        String suffix = FileUtil.getSuffix(relativeFilePath);
+        return String.format("""
+                [工具调用] %s %s
+                ``` %s
+                %s
+                ```
+                """, displayName(), relativeFilePath, suffix, content);
     }
 }

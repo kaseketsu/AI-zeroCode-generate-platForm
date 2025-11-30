@@ -3,6 +3,7 @@ package com.itflower.aiplatform.ai;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.itflower.aiplatform.ai.tools.FileWriteTool;
+import com.itflower.aiplatform.ai.tools.ToolManager;
 import com.itflower.aiplatform.model.enums.GenTypeEnums;
 import com.itflower.aiplatform.service.ChatHistoryService;
 import dev.langchain4j.community.store.memory.chat.redis.RedisChatMemoryStore;
@@ -54,6 +55,9 @@ public class AiGeneratorServiceFactory {
      */
     @Resource
     private StreamingChatModel reasoningStreamingChatModel;
+
+    @Resource
+    private ToolManager toolManager;
 
     /**
      * caffeine 本地缓存
@@ -112,7 +116,7 @@ public class AiGeneratorServiceFactory {
                     .chatMemory(store)
                     .chatMemoryProvider(memoryId -> store)
                     .streamingChatModel(reasoningStreamingChatModel)
-                    .tools(new FileWriteTool())
+                    .tools(toolManager.getTools())
                     .hallucinatedToolNameStrategy(req -> ToolExecutionResultMessage.from(
                             req, "Error: there is no tool called " + req.name()
                     ))
