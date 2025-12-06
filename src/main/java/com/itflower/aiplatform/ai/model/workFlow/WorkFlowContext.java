@@ -1,12 +1,12 @@
 package com.itflower.aiplatform.ai.model.workFlow;
 
+import com.itflower.aiplatform.model.entity.ImageResource;
 import com.itflower.aiplatform.model.enums.GenTypeEnums;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hc.core5.http.impl.nio.MessageState;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
 
 import java.util.List;
@@ -25,8 +25,7 @@ public class WorkFlowContext {
 
     private String imageListStr;
 
-    // todo: 后面用 imageResource
-    private List<String> imageList;
+    private List<ImageResource> imageList;
 
     private String enhancedPrompt;
 

@@ -48,3 +48,5 @@ langchain4j:
       max-tokens: 8192
       log-requests: true
       log-responses: true
+pexels:
+  api-key: GzMcyiuSOdTisvEOL62Edo6LrHeFoyr7hoKsNz9MydVMDE2Iid6U0iCA
