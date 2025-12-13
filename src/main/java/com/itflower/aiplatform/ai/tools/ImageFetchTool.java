@@ -1,23 +1,36 @@
 package com.itflower.aiplatform.ai.tools;
 
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.io.IORuntimeException;
+import cn.hutool.core.io.IoUtil;
+import cn.hutool.core.util.RandomUtil;
+import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import cn.hutool.system.SystemUtil;
 import com.itflower.aiplatform.common.exception.BusinessException;
 import com.itflower.aiplatform.common.exception.ErrorCode;
+import com.itflower.aiplatform.common.exception.ThrowUtils;
+import com.itflower.aiplatform.cos.CosManager;
 import com.itflower.aiplatform.model.entity.ImageResource;
 import com.itflower.aiplatform.model.enums.ImageTypeEnum;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
+import jakarta.annotation.Resource;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.xmlbeans.impl.common.IOUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -29,6 +42,9 @@ public class ImageFetchTool {
     private static final String contentImageUrl = "https://api.pexels.com/v1/search";
 
     private static final String illustrationUrl = "https://undraw.co/_next/data/N6M_hYvpIPjDtR8MHPCqU/search/%s.json?term=%s";
+
+    @Resource
+    private CosManager cosManager;
 
     @Value("${pexels.api-key}")
     private String apiKey;
@@ -116,5 +132,87 @@ public class ImageFetchTool {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, msg);
         }
         return res;
+    }
+
+    @Tool("根据 mermaid 代码生成架构图")
+    public List<ImageResource> fetchMermaidPicList(@P("mermaid 代码") String mermaidCode, @P("架构图描述信息") String description) {
+        File file = null;
+        try {
+            if (StringUtils.isBlank(mermaidCode)) {
+                return new ArrayList<>();
+            }
+            // 生成架构图
+            file = convertCodeToSvg(mermaidCode);
+            // 上传到 cos
+            String key = String.format("/mermaid/%s/%s", RandomUtil.randomString(5), file.getName());
+            String cosUrl = cosManager.uploadFile(file, key);
+            // 返回 imageSource
+            if (StringUtils.isNotBlank(cosUrl)) {
+                return Collections.singletonList(
+                        ImageResource.builder()
+                                .imageType(ImageTypeEnum.ARCHITECTURE)
+                                .description(description)
+                                .imageUrl(cosUrl)
+                                .build()
+                );
+            }
+        } catch (Exception e) {
+            String errorMsg = String.format("创建架构图出错，原因是: %s", e.getMessage());
+            log.error(errorMsg, e);
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, errorMsg);
+        } finally {
+            FileUtil.del(file);
+        }
+        return new ArrayList<>();
+    }
+
+    /**
+     * 转换 code -> svg
+     *
+     * @param mermaidCode 架构图代码
+     * @return 架构图
+     */
+    private File convertCodeToSvg(String mermaidCode) {
+        File tempFileInput = null;
+        File tempFileOutput = null;
+        try {
+            // 创建临时文件并写入数据
+            tempFileInput = FileUtil.createTempFile("tempFile_input", ".mmd", true);
+            FileUtil.writeUtf8String(mermaidCode, tempFileInput);
+            // 创建输出文件
+            tempFileOutput = FileUtil.createTempFile("tempFile_output", ".svg", true);
+            // 创建 command
+            String command = SystemUtil.getOsInfo().isWindows() ? "mmdc.cmd" : "mmdc";
+            String chromePath = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+            ProcessBuilder pb = new ProcessBuilder(
+                    command,
+                    "-i", tempFileInput.getAbsolutePath(),
+                    "-o", tempFileOutput.getAbsolutePath(),
+                    "-b", "transparent"
+            );
+            pb.environment().put("PUPPETEER_EXECUTABLE_PATH", chromePath);
+            pb.redirectErrorStream(true);
+            // 执行 command
+            Process process = pb.start();
+            String msg = IoUtil.read(process.getInputStream(), StandardCharsets.UTF_8);
+            log.info("mermaid 输出: {}", msg);
+            int exitCode = process.waitFor();
+            ThrowUtils.throwIf(exitCode != 0, ErrorCode.OPERATION_ERROR, "指令执行失败");
+            // 判空
+            ThrowUtils.throwIf(
+                    !tempFileOutput.exists() || tempFileOutput.length() == 0,
+                    ErrorCode.OPERATION_ERROR,
+                    "创建架构图失败"
+            );
+            return tempFileOutput;
+        } catch (Exception e) {
+            // 出错了删输出文件
+            FileUtil.del(tempFileOutput);
+            String errorMsg = String.format("创建架构图出错，原因是: %s", e.getMessage());
+            log.error(errorMsg, e);
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, errorMsg);
+        } finally {
+            FileUtil.del(tempFileInput);
+        }
     }
 }

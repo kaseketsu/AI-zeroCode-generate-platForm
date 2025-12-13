@@ -17,11 +17,11 @@ public class CosConfig {
     private String region;
 
     @Resource
-    private CosManager cosManager;
+    private CosCredential cosCredential;
 
     @Bean
     public COSClient cosClient() {
-        Response credential = cosManager.getCredential();
+        Response credential = cosCredential.getCredential();
         String tmpSecretId = credential.credentials.tmpSecretId;
         String tmpSecretKey = credential.credentials.tmpSecretKey;
         String sessionToken = credential.credentials.sessionToken;
