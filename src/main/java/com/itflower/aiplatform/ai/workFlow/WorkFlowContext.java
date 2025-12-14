@@ -1,4 +1,4 @@
-package com.itflower.aiplatform.ai.model.workFlow;
+package com.itflower.aiplatform.ai.workFlow;
 
 import com.itflower.aiplatform.model.entity.ImageResource;
 import com.itflower.aiplatform.model.enums.GenTypeEnums;
@@ -19,9 +19,9 @@ import java.util.Map;
 @Builder
 public class WorkFlowContext {
 
-    private static final String WORK_FLOW_KEY = "workFlow";
+    public static final String WORK_FLOW_KEY = "workFlow";
 
-    private int currentStep;
+    private String currentStep;
 
     private String imageListStr;
 
@@ -36,6 +36,8 @@ public class WorkFlowContext {
     private String buildDir;
 
     private String errorMsg;
+
+    private String originalPrompt;
 
     public static WorkFlowContext getWorkFlowContext(MessagesState<String> state) {
         return (WorkFlowContext) state.data().get(WORK_FLOW_KEY);

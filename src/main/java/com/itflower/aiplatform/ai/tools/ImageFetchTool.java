@@ -1,16 +1,17 @@
 package com.itflower.aiplatform.ai.tools;
 
 import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.RandomUtil;
-import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import cn.hutool.system.SystemUtil;
+import com.alibaba.dashscope.aigc.imagesynthesis.ImageSynthesis;
+import com.alibaba.dashscope.aigc.imagesynthesis.ImageSynthesisParam;
+import com.alibaba.dashscope.aigc.imagesynthesis.ImageSynthesisResult;
 import com.itflower.aiplatform.common.exception.BusinessException;
 import com.itflower.aiplatform.common.exception.ErrorCode;
 import com.itflower.aiplatform.common.exception.ThrowUtils;
@@ -23,16 +24,12 @@ import jakarta.annotation.Resource;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.xmlbeans.impl.common.IOUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Data
 @Slf4j
@@ -48,6 +45,12 @@ public class ImageFetchTool {
 
     @Value("${pexels.api-key}")
     private String apiKey;
+
+    @Value("${aliyun.api-key}")
+    private String aliyunApiKey;
+
+    @Value("${aliyun.model}")
+    private String aliyunModel;
 
     @Tool("根据关键词获取内容图片")
     public List<ImageResource> fetchContentImageList(@P("搜索关键词") String keyword) {
@@ -213,6 +216,43 @@ public class ImageFetchTool {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, errorMsg);
         } finally {
             FileUtil.del(tempFileInput);
+        }
+    }
+
+    @Tool("根据描述生成 logo 图片")
+    public List<ImageResource> fetchLogoImageList(@P("logo 相关描述") String description) {
+        List<ImageResource> res = new ArrayList<>();
+        try {
+            String logoPrompt = String.format("请生成 logo 图片，注意 logo 中不能有任何文字或数字，logo 描述: %s", description);
+            ImageSynthesisParam param = ImageSynthesisParam.builder()
+                    .apiKey(aliyunApiKey)
+                    .model(aliyunModel)
+                    .prompt(logoPrompt)
+                    .size("512*512")
+                    .n(1)
+                    .build();
+            ImageSynthesis imageSynthesis = new ImageSynthesis();
+            ImageSynthesisResult result = imageSynthesis.call(param);
+            if (result != null && result.getOutput() != null && result.getOutput().getResults() != null) {
+                List<Map<String, String>> results = result.getOutput().getResults();
+                for (Map<String, String> map : results) {
+                    String url = map.get("url");
+                    if (StringUtils.isNotBlank(url)) {
+                        res.add(
+                                ImageResource.builder()
+                                        .imageUrl(url)
+                                        .description(description)
+                                        .imageType(ImageTypeEnum.LOGO)
+                                        .build()
+                        );
+                    }
+                }
+            }
+            return res;
+        } catch (Exception e) {
+            String errorMsg = String.format("创建架构图出错，原因是: %s", e.getMessage());
+            log.error(errorMsg, e);
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, errorMsg);
         }
     }
 }

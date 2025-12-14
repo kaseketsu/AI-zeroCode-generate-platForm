@@ -51,4 +51,13 @@ class ImageFetchToolTest {
         String res = objectMapper.writeValueAsString(happy);
         log.info(res);
     }
+
+    @Test
+    void fetchLogo() throws JsonProcessingException {
+        final String description = "马里奥";
+        List<ImageResource> imageResources = contentImageFetchTool.fetchLogoImageList(description);
+        ObjectMapper objectMapper = new ObjectMapper();
+        String res = objectMapper.writeValueAsString(imageResources);
+        log.info(res);
+    }
 }
