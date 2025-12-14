@@ -33,7 +33,7 @@ knife4j:
 langchain4j:
   open-ai:
     chat-model:
-      api-key: sk-a9a0274a2e2e4fab87174046e08002ba
+      api-key: ${OPENAI_API_KEY}
       model-name: deepseek-chat
       base-url: https://api.deepseek.com
       strict-json-schema: true
@@ -42,11 +42,20 @@ langchain4j:
       log-requests: true
       log-responses: true
     streaming-chat-model:
-      api-key: sk-a9a0274a2e2e4fab87174046e08002ba
+      api-key: ${OPENAI_API_KEY}
       model-name: deepseek-chat
       base-url: https://api.deepseek.com
       max-tokens: 8192
       log-requests: true
       log-responses: true
+cos:
+  bucket: ${TENCENT_COS_BUCKET}
+  region: ${TENCENT_COS_REGION:}
+  secretId: ${TENCENT_SECRET_ID}
+  secretKey: ${TENCENT_SECRET_KEY}
 pexels:
-  api-key: GzMcyiuSOdTisvEOL62Edo6LrHeFoyr7hoKsNz9MydVMDE2Iid6U0iCA
+  api-key: ${PEXELS_API_KEY}
+
+aliyun:
+  api-key: ${ALIYUN_API_KEY}
+  model: ${ALIYUN_MODEL}
